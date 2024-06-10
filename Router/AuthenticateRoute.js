@@ -2,7 +2,7 @@ import { Router } from "express";
 
 const router = Router()
 
-import { authenticate } from "../controllers/authenticateController.js";
+import { authenticate } from "../Controllers/authenticateController.js";
 import {isAuthenticated} from "../middleware/auth.js";
 router.route('/').get(isAuthenticated,authenticate);
 
