@@ -42,6 +42,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:3000",
       "http://localhost:3001",
+      "https://mnnlr-da4ef.web.app"
     ],
     withCredentials: true,
     credentials: true,
