@@ -6,7 +6,7 @@ import {
   leaveRequest,
   getLeaveRequestById,
   approveLeaveRequest,
-} from "../controllers/LeaveController.js";
+} from "../Controllers/LeaveController.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
