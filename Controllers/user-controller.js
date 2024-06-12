@@ -73,7 +73,7 @@ export const userLogin = async (req, res,next) => {
     if(employee?._id){
       
       const today = new Date().setHours(0, 0, 0, 0); // Start of today
-  
+      console.log('today : ',today)
       // Find the performance document for today
       let performance = await Performance.findOne({
         employeeDocId:employee._id,
@@ -82,7 +82,7 @@ export const userLogin = async (req, res,next) => {
       });
 
       const currentTime = new Date().toTimeString().split(' ')[0]
-
+      console.log('currentTime : ',currentTime)
       if (!performance) {
         // Create a new performance document if it doesn't exist for today
         performance = await Performance.create({
