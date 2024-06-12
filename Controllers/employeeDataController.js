@@ -171,7 +171,11 @@ export const createEmployeeDetails = async (req, res) => {
       designationLevel,
       employeeId,
     } = req.body;
+<<<<<<< HEAD
 console.log('req body : ',req.body);
+=======
+
+>>>>>>> origin/main
     const hashedPassword = await hash("password", 10);
 
     const User = await user.create({
@@ -180,8 +184,11 @@ console.log('req body : ',req.body);
       role: "employee",
     });
 
+<<<<<<< HEAD
     console.log('User : ',User)
 
+=======
+>>>>>>> origin/main
     const employeeDetails = await EmployeeSchema.create({
       firstName,
       lastName,
@@ -237,6 +244,7 @@ console.log('req body : ',req.body);
     if (employeeDetails._id) {
       // --------------------------------------------------------------------------------------------------->
       //logic for replacing text in pdf
+<<<<<<< HEAD
       // const API_KEY = "kashifrazasonbarsa@gmail.com_5p6br1Owwr22S0k53eeM9h9gPb8n8y062hc1V0mpPOt0tFj8oR851ZeHMEHBBnQd";
 
       // Source PDF file
@@ -425,12 +433,204 @@ console.log('req body : ',req.body);
       //   postRequest.write(jsonPayload);
       //   postRequest.end();
       // }
+=======
+      const API_KEY =
+        "kashifrazasonbarsa@gmail.com_5p6br1Owwr22S0k53eeM9h9gPb8n8y062hc1V0mpPOt0tFj8oR851ZeHMEHBBnQd";
+
+      // Source PDF file
+      const SourceFile = "../files/Offerletter-MNNLR.pdf";
+      // PDF document password. Leave empty for unprotected documents.
+      const Password = "";
+      // Destination PDF file name
+      const DestinationFile = `./files/OfferLetter-${Date.now()}.pdf`;
+
+      function addMonths(date, months) {
+        const d = new Date(date);
+        d.setMonth(d.getMonth() + months);
+        return d;
+      }
+
+      // Calculate the new dates
+      const createdAtDate = new Date(employeeDetails.createdAt);
+      const newDate1 = createdAtDate.toLocaleDateString();
+      const newDate2 = addMonths(createdAtDate, 6).toLocaleDateString();
+
+      const searchReplacePairs = [
+        {
+          searchString: "Md Kashif Raza",
+          replaceString: firstName + " " + lastName,
+        },
+        {
+          searchString: "08-05-2024",
+          replaceString: newDate1,
+        },
+        {
+          searchString: "08-11-2024",
+          replaceString: newDate2,
+        },
+        {
+          searchString: "Faridabad Haryana",
+          replaceString: address,
+        },
+        {
+          searchString: "Faridabad, Haryana, 121004",
+          replaceString: "",
+        },
+        // Add more pairs as needed
+      ];
+
+      // 1. RETRIEVE PRESIGNED URL TO UPLOAD FILE.
+      getPresignedUrl(API_KEY, SourceFile)
+        .then(([uploadUrl, uploadedFileUrl]) => {
+          // 2. UPLOAD THE FILE TO CLOUD.
+          uploadFile(API_KEY, SourceFile, uploadUrl)
+            .then(() => {
+              // 3. Replace Text FROM UPLOADED PDF FILE
+              for (const pair of searchReplacePairs) {
+                replaceStringFromPdf(
+                  API_KEY,
+                  uploadedFileUrl,
+                  Password,
+                  DestinationFile,
+                  pair.searchString,
+                  pair.replaceString
+                );
+              }
+            })
+            .catch((e) => {
+              console.log(e);
+            });
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+
+      function getPresignedUrl(apiKey, localFile) {
+        return new Promise((resolve) => {
+          // Prepare request to `Get Presigned URL` API endpoint
+          let queryPath = `/v1/file/upload/get-presigned-url?contenttype=application/octet-stream&name=${path.basename(
+            SourceFile
+          )}`;
+          let reqOptions = {
+            host: "api.pdf.co",
+            path: encodeURI(queryPath),
+            headers: { "x-api-key": API_KEY },
+          };
+          // Send request
+          https
+            .get(reqOptions, (response) => {
+              response.on("data", (d) => {
+                let data = JSON.parse(d);
+                if (data.error == false) {
+                  // Return presigned url we received
+                  resolve([data.presignedUrl, data.url]);
+                } else {
+                  // Service reported error
+                  console.log("getPresignedUrl(): " + data.message);
+                }
+              });
+            })
+            .on("error", (e) => {
+              // Request error
+              console.log("getPresignedUrl(): " + e);
+            });
+        });
+      }
+
+      function uploadFile(apiKey, localFile, uploadUrl) {
+        return new Promise((resolve) => {
+          fs.readFile(SourceFile, (err, data) => {
+            request(
+              {
+                method: "PUT",
+                url: uploadUrl,
+                body: data,
+                headers: {
+                  "Content-Type": "application/octet-stream",
+                },
+              },
+              (err, res, body) => {
+                if (!err) {
+                  resolve();
+                } else {
+                  console.log("uploadFile() request error: " + e);
+                }
+              }
+            );
+          });
+        });
+      }
+
+      function replaceStringFromPdf(
+        apiKey,
+        uploadedFileUrl,
+        password,
+        destinationFile,
+        searchString,
+        replaceString
+      ) {
+        // Prepare request to `Replace Text from PDF` API endpoint
+        var queryPath = `/v1/pdf/edit/replace-text`;
+
+        // JSON payload for api request
+        var jsonPayload = JSON.stringify({
+          name: path.basename(destinationFile),
+          password: password,
+          url: uploadedFileUrl,
+          searchString: searchString,
+          replaceString: replaceString,
+        });
+
+        var reqOptions = {
+          host: "api.pdf.co",
+          method: "POST",
+          path: queryPath,
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(jsonPayload, "utf8"),
+          },
+        };
+        // Send request
+        var postRequest = https
+          .request(reqOptions, (response) => {
+            response.on("data", (d) => {
+              response.setEncoding("utf8");
+              // Parse JSON response
+              let data = JSON.parse(d);
+              if (data.error == false) {
+                // Download PDF file
+                var file = fs.createWriteStream(destinationFile);
+                https.get(data.url, (response2) => {
+                  response2.pipe(file).on("close", () => {
+                    console.log(
+                      `Generated PDF file saved as "${destinationFile}" file.`
+                    );
+                  });
+                });
+              } else {
+                // Service reported error
+                console.log("readBarcodes(): " + data.message);
+              }
+            });
+          })
+          .on("error", (e) => {
+            // Request error
+            console.log("readBarcodes(): " + e);
+          });
+
+        // Write request data
+        postRequest.write(jsonPayload);
+        postRequest.end();
+      }
+>>>>>>> origin/main
 
       // ------------------------------------------------------------------------------------------>
 
       const message = `\n Your temporary Username and Password are :- ${employeeId} and ${"password"}' \n\n 
     If you have not requested this email then, please ignore it `;
 
+<<<<<<< HEAD
       const status = await sendEmail(email, "Employee Id Generation", message);
       console.log('status : ',status);
 //       const message1 = `Dear ${firstName + " " + lastName},
@@ -443,6 +643,20 @@ console.log('req body : ',req.body);
 // `;
 
 //       AutoSendEmail(email, "Internship Opportunity at MNNLR", message1);
+=======
+      await sendEmail(email, "Employee Id Generation", message);
+
+      const message1 = `Dear ${firstName + " " + lastName},
+
+I hope this email finds you well. I am writing to you on behalf of MNNLR, an innovative startup company.
+
+We understand that an unpaid internship may not be feasible for everyone, but we believe the experience gained at MNNLR will be invaluable for your future career aspirations.
+
+Thank you for considering this opportunity with MNNLR. We look forward to potentially welcoming you to our team and helping you achieve your professional goals.
+`;
+
+      AutoSendEmail(email, "Internship Opportunity at MNNLR", message1);
+>>>>>>> origin/main
     }
 
 
@@ -453,7 +667,10 @@ console.log('req body : ',req.body);
       employeeDetails,
     });
   } catch (error) {
+<<<<<<< HEAD
     console.log('error', error)
+=======
+>>>>>>> origin/main
     res.status(500).json({ success: false, message: error.message });
   }
 };
