@@ -3,6 +3,7 @@ import {
   createEmployeeDetails,
   getAllEmployee,
   getEmployeeById,
+  deleteOneEmployee
 } from "../Controllers/employeeDataController.js";
 
 import { isAuthenticated } from "../middleware/auth.js";
@@ -26,7 +27,13 @@ router
     getAllEmployee
   );
 
-router.route("/employee/byId/:id").get(isAuthenticated, getEmployeeById);
+router.route("/employee/byId/:id")
+  .get(isAuthenticated, getEmployeeById)
+  .delete(
+    isAuthenticated,
+    restrictMiddleware(["admin","hr","employee"]),
+    deleteOneEmployee
+  );
 router
   .route("/employee/empId/:employeeId")
   .get(isAuthenticated, getEmployeeById);

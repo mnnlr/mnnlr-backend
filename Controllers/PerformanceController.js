@@ -16,7 +16,7 @@ const getAllPerformance = async (req, res, next) => {
   }
 };
 
-const AllEmployeeAttandance = async (req, res) => {
+const AllEmployeeAttandance = async (req, res,next) => {
   try {
     const performances = await Performance.find({})
       .populate({
@@ -25,7 +25,7 @@ const AllEmployeeAttandance = async (req, res) => {
           "firstName lastName avatar designation designationLevel employeeId",
       })
       .lean();
-
+console.log(performances)
     const attendanceByEmployee = {};
 
     const period = "today";
@@ -47,7 +47,7 @@ const AllEmployeeAttandance = async (req, res) => {
         totalWorkingHours = `${hours}:${minutes}:${seconds}`;
       }
 
-      const employeeId = performance.employeeDocId._id;
+      const employeeId = performance?.employeeDocId?._id;
 
       if (!attendanceByEmployee[employeeId]) {
         attendanceByEmployee[employeeId] = {

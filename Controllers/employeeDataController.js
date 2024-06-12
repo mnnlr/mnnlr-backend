@@ -1,4 +1,9 @@
 import EmployeeSchema from "../Models/employeeSchema.js";
+import Leave from "../Models/LeaveModel.js";
+import Performance from "../Models/PerformanceModel.js";
+import User from "../Models/user_model.js";
+import Team from "../Models/TeamModel.js";
+
 import cloudinary from "cloudinary";
 import { hash } from "bcrypt";
 import { sendEmail } from "../utils/sendEmail.js";
@@ -49,6 +54,43 @@ export const getEmployeeById = async (req, res, next) => {
     next(new ErrorHandler(500, error.message));
   }
 };
+
+export const deleteOneEmployee = async(req,res) => {
+  try {
+
+    const {id} = req.params;
+    
+    // we can delete leave of this employee here
+    await Leave.findOneAndDelete({id:id})
+
+    //we can delete attendence of employee here    
+    await Performance.findOneAndDelete({employeeDocId:id})
+
+    //we can delete employee team here
+    const deleteResult = await Team.deleteOne({
+      'PeojectLeader.Id': id,
+    });
+
+    if (deleteResult.deletedCount === 0) {
+      // Remove the team member if the ID matches
+      await Team.updateMany(
+        { 'teamMembers.Id': id },
+        { $pull: { teamMembers: { 'Id': id } } }
+      );
+    }
+     //we can delete employee here
+     const employee = await EmployeeSchema.findByIdAndDelete(id);
+
+    // we can delete login credential of employee here
+    await User.findOneAndDelete({_id:employee?.userId})
+
+    res.status(200).json({success:true,message:'employee deleted successfully...'})
+
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({success:true,message:error.message})
+  }
+}
 
 export const createEmployeeDetails = async (req, res) => {
   try {
