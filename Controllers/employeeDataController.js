@@ -217,6 +217,7 @@ export const createEmployeeDetails = async (req, res) => {
     const hashedPassword = await hash("password", 10);
 
     const User = await user.create({
+      email:email,
       username: employeeId,
       password: hashedPassword,
       role: "employee",

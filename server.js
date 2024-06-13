@@ -42,7 +42,7 @@ app.use(
       "http://localhost:5173",
       "http://localhost:3000",
       "http://localhost:3001",
-      "https://mnnlr-da4ef.web.app"
+      process.env.CLIENT_URL
     ],
     withCredentials: true,
     credentials: true,
@@ -74,12 +74,15 @@ import RefreshTokenRoute from "./Router/RefreshTokenRoute.js";
 import LeaveRouter from "./Router/LeaveRoute.js";
 import teamRouter from "./Router/TeamRoute.js";
 
+import PasswordRecoveryRoute from './Router/passwordRecoveryRoute.js'
+
 app.use(userRouter);
 app.use(RefreshTokenRoute);
 app.use(webDesignRouter);
 
 app.use("/authenticate", authenticateRouter);
 app.use("/api/v1", ContectusRouter);
+app.use("/api/v1/recovery", PasswordRecoveryRoute);
 
 app.use("/client", clientRouter);
 app.use("/api/v1/order", orderRoutes);
