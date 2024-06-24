@@ -18,9 +18,8 @@ import path from "path";
 import fs from "fs";
 import PDFNet from "@pdftron/pdfnet-node";
 import { fileURLToPath } from "url";
+import base64StringToFile from "../utils/getFileFromBase64.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export const getAllEmployee = async (req, res) => {
   try {
@@ -101,12 +100,13 @@ export const createEmployeeDetails = async (req, res) => {
       myCloud1 = await cloudinary.v2.uploader.upload(req.body.aadhar, {
         resource_type: "auto",
         folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
         overwrite: true,
       });
     }
+
     if (req.body.avatar) {
       myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
         folder: "avatars",
@@ -114,25 +114,27 @@ export const createEmployeeDetails = async (req, res) => {
         crop: "scale",
       });
     }
+    
     let myCloud2 = "";
     if (req.body.pan) {
       myCloud2 = await cloudinary.v2.uploader.upload(req.body.pan, {
         resource_type: "auto",
         folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
         overwrite: true,
       });
     }
+
     let myCloud3 = "";
     if (req.body.Bank) {
       myCloud3 = await cloudinary.v2.uploader.upload(req.body.Bank, {
         resource_type: "auto",
         folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
         overwrite: true,
       });
     }
@@ -142,9 +144,9 @@ export const createEmployeeDetails = async (req, res) => {
       myCloud4 = await cloudinary.v2.uploader.upload(req.body.PF, {
         resource_type: "auto",
         folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
         overwrite: true,
       });
     }
@@ -154,9 +156,9 @@ export const createEmployeeDetails = async (req, res) => {
       myCloud5 = await cloudinary.v2.uploader.upload(req.body.xthMarksheet, {
         resource_type: "auto",
         folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
         overwrite: true,
       });
     }
@@ -165,9 +167,9 @@ export const createEmployeeDetails = async (req, res) => {
     if (req.body.xiithMarksheet) {
       myCloud6 = await cloudinary.v2.uploader.upload(req.body.xiithMarksheet, {
         resource_type: "auto",
-        folder: "files",
-        width: 150,
-        crop: "scale",
+        folder: "files", 
+        // width: 150,
+        // crop: "scale",
         format: "pdf", // Change format to PDF
         overwrite: true,
       });
@@ -180,9 +182,9 @@ export const createEmployeeDetails = async (req, res) => {
         {
           resource_type: "auto",
           folder: "files",
-          width: 150,
-          crop: "scale",
-          format: "pdf", // Change format to PDF
+          // width: 150,
+          // crop: "scale",
+          // format: "pdf", // Change format to PDF
           overwrite: true,
         }
       );
@@ -192,11 +194,11 @@ export const createEmployeeDetails = async (req, res) => {
     if (req.body.pgMarksheet) {
       myCloud8 = await cloudinary.v2.uploader.upload(req.body.pgMarksheet, {
         resource_type: "auto",
-        folder: "files",
-        width: 150,
-        crop: "scale",
-        format: "pdf", // Change format to PDF
-        overwrite: true,
+          folder: "files",
+          // width: 150,
+          // crop: "scale",
+          // format: "pdf", // Change format to PDF
+          overwrite: true,
       });
     }
 
@@ -273,7 +275,7 @@ export const createEmployeeDetails = async (req, res) => {
         url: myCloud8.secure_url,
       },
     });
-
+    console.log('test 13')
     //Logic for sending employeeid , Offer Letter and Generating Pdf
     if (employeeDetails._id) {
       // --------------------------------------------------------------------------------------------------->
@@ -468,11 +470,12 @@ export const createEmployeeDetails = async (req, res) => {
       // }
 
       // ------------------------------------------------------------------------------------------>
-
+      console.log('test 14')
       const message = `\n Your temporary Username and Password are :- ${employeeId} and ${"password"}' \n\n 
     If you have not requested this email then, please ignore it `;
-
+    console.log('test 15')
     await sendEmail(email, "Employee Id Generation", message);
+    console.log('test 16')
   
 //       const message1 = `Dear ${firstName + " " + lastName},
 
@@ -486,7 +489,7 @@ export const createEmployeeDetails = async (req, res) => {
 //       AutoSendEmail(email, "Internship Opportunity at MNNLR", message1);
     }
 
-
+    console.log('test 17')
 
     res.status(201).json({
       success: true,
@@ -494,7 +497,7 @@ export const createEmployeeDetails = async (req, res) => {
       employeeDetails,
     });
   } catch (error) {
-    console.log('error', error)
+    console.log('error123', error)
     res.status(500).json({ success: false, message: error.message });
   }
 };
