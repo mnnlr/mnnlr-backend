@@ -494,7 +494,7 @@ export const createEmployeeDetails = async (req, res) => {
       employeeDetails,
     });
   } catch (error) {
-    // console.log('error', error)
+    console.log('error', error)
     res.status(500).json({ success: false, message: error.message });
   }
 };

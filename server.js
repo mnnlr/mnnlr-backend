@@ -8,6 +8,7 @@ import cloudinary from "cloudinary";
 import fileUpload from "express-fileupload";
 import configDotenv from "dotenv";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import morgan from 'morgan'
 import fs from "fs";
 import path from "path";
 // import dashboardRoute from "./Router/statisticsRoute.js";
@@ -48,6 +49,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(morgan('tiny'))
 
 import ContectusRouter from "./Router/ContectusRouter.js";
 
