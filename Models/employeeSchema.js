@@ -143,6 +143,11 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       ref: "user",
     },
+    Shift: {
+      type: String,
+      required: true,
+      default:'morning'
+    },
   },
   { timestamps: true }
 );

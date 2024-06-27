@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createEmployeeDetails,
   getAllEmployee,
+  getEmployeeByUserId,
   getEmployeeById,
   deleteOneEmployee
 } from "../Controllers/employeeDataController.js";
@@ -27,7 +28,11 @@ router
     getAllEmployee
   );
 
-router.route("/employee/byId/:id")
+router.route("/employee/byuserId")  
+  .get(isAuthenticated,restrictMiddleware(["admin","hr","employee"]), getEmployeeByUserId)
+  
+
+router.route("/employee/byId/:id")  
   .get(isAuthenticated, getEmployeeById)
   .delete(
     isAuthenticated,

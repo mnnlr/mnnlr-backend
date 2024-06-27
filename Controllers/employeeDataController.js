@@ -24,7 +24,7 @@ import base64StringToFile from "../utils/getFileFromBase64.js";
 export const getAllEmployee = async (req, res) => {
   try {
     const employee = await EmployeeSchema.find({});
-    res.status(200).json({ success: true, employee });
+    res.status(200).json({ success: true, Data:employee });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -49,6 +49,22 @@ export const getEmployeeById = async (req, res, next) => {
     }
 
     res.status(200).json({ employee, success: true });
+  } catch (error) {
+    next(new ErrorHandler(500, error.message));
+  }
+};
+
+export const getEmployeeByUserId = async (req, res, next) => {
+  try {
+
+    const {_id} = req.user;
+
+    const employee = await EmployeeSchema.findOne({userId:_id});
+    if (!employee) {
+      return next(new ErrorHandler(404, "Employee not found"));
+    }
+
+    res.status(200).json({ Data:employee, success: true });
   } catch (error) {
     next(new ErrorHandler(500, error.message));
   }

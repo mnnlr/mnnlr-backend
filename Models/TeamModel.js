@@ -54,10 +54,10 @@ const TeamSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    Shift: {
-        type: String,
-        required: true,
-    }
+    // Shift: {
+    //     type: String,
+    //     required: true,
+    // }
 });
 
 

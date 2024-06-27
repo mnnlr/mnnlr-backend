@@ -55,6 +55,7 @@ export const userLogin = async (req, res,next) => {
 
   try {
     
+
     const {username,password} = req.body;
 
     if(!username) return next(new ErrorHandler(400,'username required'))
@@ -116,7 +117,7 @@ export const userLogin = async (req, res,next) => {
       // signed : true
     }
 
-    const AccessToken = jwt.sign({_id:rest?._id,role:rest.role},process.env.JWT_ACCESS_TOKEN_SECRET,{expiresIn:'30s'});
+    const AccessToken = jwt.sign({_id:rest?._id,role:rest.role},process.env.JWT_ACCESS_TOKEN_SECRET,{expiresIn:'30m'});
     const RefreshToken = jwt.sign({_id:rest?._id,role:rest.role},process.env.JWT_REFRESH_TOKEN_SECRET,{expiresIn:'15d'});
 
     await user_model.findOneAndUpdate({username:username},{refreshToken:RefreshToken},{new:true})
