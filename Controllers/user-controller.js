@@ -69,7 +69,7 @@ export const userLogin = async (req, res,next) => {
 
 
       const today = new Date().toISOString().split('T')[0];
-      const currentTime = new Date().toTimeString().split(' ')[0]
+      const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
       await Performance.findOneAndUpdate(
         {  
           user_id: foundUser._id, 
@@ -137,12 +137,12 @@ export const LogOut = async (req, res,next) => {
       
       
       const today = new Date().toISOString().split('T')[0]; // Start of today
-
+      
       const performance = await Performance.findOne({
             user_id: foundUser.id,
             date: today,
         });
-
+        console.log('login performance : ',performance)
         if (performance) {
 
           const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
