@@ -10,7 +10,7 @@ import configDotenv from "dotenv";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import morgan from 'morgan'
 import fs from "fs";
-import path from "path";
+// import path from "path";
 // import dashboardRoute from "./Router/statisticsRoute.js";
 
 const app = express();
@@ -40,9 +40,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: [
-      // "http://localhost:5173",
-      // "http://localhost:3000",
-      // "http://localhost:3001",
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
       process.env.CLIENT_URL
     ],
     withCredentials: true,

@@ -22,23 +22,26 @@ router
 
 router
   .route("/employees")
-  .get(
+  .get( 
     isAuthenticated,
     restrictMiddleware(["admin", "hr", "employee"]),
     getAllEmployee
   );
+  router.route("/employee/:id")  
+    .get(isAuthenticated , restrictMiddleware(["admin","hr","employee"]), getEmployeeById)
+    .delete(
+      isAuthenticated,
+      restrictMiddleware(["admin","hr"]),
+      deleteOneEmployee
+    );
+  
+router.route("/employee")  
+  .get(isAuthenticated,restrictMiddleware(["employee"]), getEmployeeByUserId)
 
 router.route("/employee/byuserId")  
   .get(isAuthenticated,restrictMiddleware(["admin","hr","employee"]), getEmployeeByUserId)
   
 
-router.route("/employee/byId/:id")  
-  .get(isAuthenticated, getEmployeeById)
-  .delete(
-    isAuthenticated,
-    restrictMiddleware(["admin","hr","employee"]),
-    deleteOneEmployee
-  );
 router
   .route("/employee/empId/:employeeId")
   .get(isAuthenticated, getEmployeeById);

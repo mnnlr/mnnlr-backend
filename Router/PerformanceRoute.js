@@ -28,9 +28,9 @@ router
     restrictMiddleware(["admin", "hr"]),
     AllEmployeeAttandance
   );
-router.route("/attendance/:employeeId").get(
-  // isAuthenticated,
-  // restrictMiddleware(["admin", "hr", "employee"]),
+router.route("/attendance/:id").get(
+  isAuthenticated,
+  restrictMiddleware(["admin", "hr", "employee"]),
   EmployeeAttandanceById
 );
 

@@ -9,6 +9,7 @@ const isAuthenticated = async(req,res,next) => {
             if(!authHeader) return next(new ErrorHandler(401,"Please logIn to access"))
 
             const token = authHeader.split(' ')[1]
+            
             if(!token) return next(new ErrorHandler(401,"Please logIn to access"))
             
             const decodedData = jwt.verify(token,process.env.JWT_ACCESS_TOKEN_SECRET)
@@ -19,9 +20,9 @@ const isAuthenticated = async(req,res,next) => {
             next()
 
     } catch (error) {
+        console.log('error',error.message)
         next(new ErrorHandler(403,"forbidden"))
     }
-
 
 }
 

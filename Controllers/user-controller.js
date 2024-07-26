@@ -1,10 +1,8 @@
 import Performance from "../Models/PerformanceModel.js";
-import Employee from "../Models/employeeSchema.js";
 
 import user_model from "../Models/user_model.js";
 import user from "../Models/user_model.js";
-import { compare } from "bcrypt";
-import { createToken } from "../utils/tokenGenerator.js";
+
 import { validationResult } from "express-validator";
 import hash from "crypto";
 
@@ -69,43 +67,22 @@ export const userLogin = async (req, res,next) => {
 
     if(!isPasswordValid) return next(new ErrorHandler(404,'Invalid username or password'));
 
-    // await user_model.findOneAndUpdate({username:username},{loginTime:Date.now()},{new:true});
-    const employee = await Employee.findOne({userId:foundUser._id});
-    if(employee?._id){
-      
-      const today = new Date().setHours(0, 0, 0, 0); // Start of today
-      console.log('today : ',today)
-      // Find the performance document for today
-      let performance = await Performance.findOne({
-        employeeDocId:employee._id,
-        user_id: foundUser?._id,
-        // 'timeTracking.date': today
-      });
 
+      const today = new Date().toISOString().split('T')[0];
       const currentTime = new Date().toTimeString().split(' ')[0]
-      console.log('currentTime : ',currentTime)
-      if (!performance) {
-        // Create a new performance document if it doesn't exist for today
-        performance = await Performance.create({
-            employeeDocId:employee._id,
-            user_id: foundUser._id,
-            timeTracking: [{ date: today, timeIn: currentTime, timeOut: null }]
-        });
-      }
-      if(performance){
-        // Update the existing document with login time if timeIn is not set
-        const timeEntry = performance.timeTracking.find(entry => entry.date.getTime() === today);
-
-        if (timeEntry && !timeEntry.timeIn) {
-          timeEntry.timeIn = currentTime;
-        } else if (!timeEntry) {
-          // Add a new entry if no entry for today exists
-          performance.timeTracking.push({ date: today, timeIn: currentTime, timeOut: null });
+      await Performance.findOneAndUpdate(
+        {  
+          user_id: foundUser._id, 
+          date: today,  
+        },
+        { 
+          $push: { timeTracking: { timeIn: currentTime } } 
+        },
+        { 
+          new: true, 
+          upsert: true 
         }
-      }
-  
-      await performance.save();
-    }
+      );
 
     const {password:_,refreshToken,...rest} = foundUser._doc;
 
@@ -132,63 +109,114 @@ export const userLogin = async (req, res,next) => {
 };
 
 
-export const LogOut = async (req, res) => {
-
-  const cookie = req.cookies;
-
-  if(!cookie.Token) return res.sendStatus(204); //no content
-
-  const refreshToken = cookie.Token;
-
-  const foundUser = await user_model.findOne({refreshToken});
-
-  if(!foundUser) {
-    res.clearCookie("Token", {
-      httpOnly: true,
-      sameSite:'None',
-      secure:true,
-      signed: true,
-      path: '/'
-    })
-    return res.sendStatus(204); //no content
-  
-  }
-
-  await user_model.findOneAndUpdate({refreshToken:refreshToken},{refreshToken:null},{new:true});
-
-  const {ID} = req.body;
-
-  const today = new Date().setHours(0, 0, 0, 0); // Start of today
-
-  // Find the performance document for today
-  const performance = await Performance.findOne({
-      user_id: ID,
-      'timeTracking.date': today
-  });
-
-  if (performance) {
-
-    // Update the existing document with logout time
-    const currentTime = new Date().toTimeString().split(' ')[0]
-    const timeEntry = performance.timeTracking.find(entry => entry.date.getTime() === today);
-
-    if (!timeEntry.timeOut) {
-
-      timeEntry.timeOut = currentTime;
+export const LogOut = async (req, res,next) => {
+  try {
     
+      const cookie = req.cookies;
+
+      if(!cookie.Token) return res.sendStatus(204); //no content
+
+    const refreshToken = cookie.Token;
+    
+    const decodedData = jwt.verify(refreshToken,process.env.JWT_REFRESH_TOKEN_SECRET)
+
+    const foundUser = await user_model.findOne({_id:decodedData?._id});
+      
+      if(foundUser?.refreshToken !== refreshToken) {
+        res.clearCookie("Token", {
+          httpOnly: true,
+          sameSite:'None',
+          secure:true,
+          signed: true,
+          path: '/'
+        })
+        return res.sendStatus(204)
+      }
+
+      await user_model.findOneAndUpdate({refreshToken:refreshToken},{refreshToken:null},{new:true});
+      
+      
+      const today = new Date().toISOString().split('T')[0]; // Start of today
+      
+      const performance = await Performance.findOne({
+            user_id: foundUser.id,
+            date: today,
+        });
+        console.log('login performance : ',performance)
+        if (performance) {
+
+          const currentTime = new Date().toTimeString().split(' ')[0]
+          const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+      
+          if (!timeEntry.timeOut) {
+          
+            timeEntry.timeOut = currentTime;
+        
+          }
+        
+          await performance.save();
+        
+        }
+
+        res.clearCookie("Token", {
+          httpOnly: true,
+          sameSite:'None',
+          secure:true,
+          signed: true,
+          path: '/'
+        });
+      
+      return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      const cookie = req.cookies;
+
+      const refreshToken = cookie.Token;
+
+      if(!refreshToken) {
+
+        res.clearCookie("Token", {
+          httpOnly: true,
+          sameSite:'None',
+          secure:true,
+          signed: true,
+          path: '/'
+          })
+          return res.sendStatus(204)
+          
+        }
+
+      const foundUser = await user_model.findOneAndUpdate({refreshToken:refreshToken},{refreshToken:null},{new:true});
+      const today = new Date().toISOString().split('T')[0];
+      
+      const performance = await Performance.findOne({
+            user_id: foundUser._id,
+            date: today,
+        });
+        
+        if (performance) {
+  
+          const currentTime = new Date().toTimeString().split(' ')[0]
+          const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+       
+          if (!timeEntry.timeOut) {
+          
+            timeEntry.timeOut = currentTime;
+        
+          }
+        
+          await performance.save();
+        
+        }
+        res.clearCookie("Token", {
+          httpOnly: true,
+          sameSite:'None',
+          secure:true,
+          signed: true,
+          path: '/'
+        }); 
+      return res.status(200).json({ message: "Logout successful" });
     }
-    
-    await performance.save();
-  
+    next(error)
   }
-
-  res.clearCookie("Token", {
-    httpOnly: true,
-    sameSite:'None',
-    secure:true,
-    signed: true,
-    path: '/'
-  });
-  
-  res.status(204).json({ message: "Logout successful" });
 }

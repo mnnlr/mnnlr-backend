@@ -1,66 +1,66 @@
-async function calculateTotalWorkingHours(performance, period) {
-  if (!performance?._id) return;
+import moment from "moment";
 
-  function parseTime(timeStr) {
-    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-    const now = new Date();
-    return new Date(now.setHours(hours, minutes, seconds, 0));
-  }
+async function calculateTotalWorkingHours(attandance, period) {
+  // console.log('attandance : ',attandance)
+  if (!attandance?._id) return;
 
-  const now = new Date();
-  let startDate;
+  // const now = new Date();
+  // let startDate;
 
-  switch (period) {
-    case "today":
-      startDate = new Date(now.setHours(0, 0, 0, 0));
-      break;
-    case "week":
-      startDate = new Date(now.setDate(now.getDate() - now.getDay()));
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case "month":
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case "year":
-      startDate = new Date(now.getFullYear(), 0, 1);
-      break;
-    default:
-      throw new Error("Invalid period specified.");
-  }
+  // switch (period) {
+  //   case "today":
+  //     startDate = new Date(now.setHours(0, 0, 0, 0));
+  //     break;
+  //   case "week":
+  //     startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+  //     startDate.setHours(0, 0, 0, 0);
+  //     break;
+  //   case "month":
+  //     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  //     break;
+  //   case "year":
+  //     startDate = new Date(now.getFullYear(), 0, 1);
+  //     break;
+  //   default:
+  //     throw new Error("Invalid period specified.");
+  // }
 
-  // let totalMilliseconds = 0;
-  let Data = { totalMilliseconds: null, LoginTime: null },
-    logoutTime = null;
+  // console.log('attandance : ',attandance)
 
-  performance.timeTracking.forEach((entry) => {
-    const entryDate = new Date(entry.date);
-    if (entryDate >= startDate) {
-      const timeIn = parseTime(entry.timeIn);
-      const timeOut = entry.timeOut ? parseTime(entry.timeOut) : new Date();
-      const workedMilliseconds = timeOut - timeIn;
-      Data.LoginTime = entry?.timeIn;
-      Data.logoutTime = entry?.timeOut;
-      Data.totalMilliseconds += workedMilliseconds;
+  let totalSeconds = 0;
+  let calculatedAttendance = null;
+
+  const attandanceObj = attandance.toObject();
+  
+
+  calculatedAttendance = { ...attandanceObj, timeTracking: [] };
+
+  attandanceObj.timeTracking.forEach(entry => {
+
+    const timeIn = moment(entry.timeIn, 'HH:mm:ss');
+    if(!entry.timeOut){
+      console.log('current time : ',new Date().toTimeString().split(' ')[0])
     }
+    const timeOut = entry.timeOut ? moment(entry.timeOut, 'HH:mm:ss') : moment( new Date().toTimeString().split(' ')[0], 'HH:mm:ss');
+
+    const duration = moment.duration(timeOut.diff(timeIn));
+    
+    calculatedAttendance.timeTracking.push({
+      ...entry,
+      duration: `${String(duration.hours()).padStart(2, '0')}:${String(duration.minutes()).padStart(2, '0')}:${String(duration.seconds()).padStart(2, '0')}`
+    });
+
+    totalSeconds += duration.asSeconds();
   });
 
-  // Convert total milliseconds to hours, minutes, and seconds
-  const totalHours = Math.floor(Data?.totalMilliseconds / (1000 * 60 * 60));
-  const totalMinutes = Math.floor(
-    (Data?.totalMilliseconds % (1000 * 60 * 60)) / (1000 * 60)
-  );
-  const totalSeconds = Math.floor(
-    (Data?.totalMilliseconds % (1000 * 60)) / 1000
-  );
+  const totalWorkingHours = `${String(Math.floor(totalSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')}:${String(Math.floor(totalSeconds % 60)).padStart(2, '0')}`;
+  calculatedAttendance.totalWorkingHours = totalWorkingHours;
+ 
 
-  return {
-    hours: totalHours,
-    minutes: totalMinutes,
-    seconds: totalSeconds,
-    LoginTime: Data?.LoginTime,
-    logoutTime: Data?.logoutTime,
-    totalMilliseconds: Data?.totalMilliseconds,
-  };
+  return new Promise((resolve,reject)=>{
+    resolve({calculatedAttendance,totalSeconds});
+    reject('error while calculating total working hours')
+  })
 }
 
 export default calculateTotalWorkingHours;

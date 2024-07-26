@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const leaveSchema = new mongoose.Schema({
     id:{ type: mongoose.Schema.Types.ObjectId, ref: 'EmployeeSchema' },
-    employeeId:{
-        type:String,
-        ref:"EmployeeSchema",
-        required:true
-    },
+    // employeeId:{
+    //     type:String,
+    //     ref:"EmployeeSchema",
+    //     required:true
+    // },
     
     typeOfLeave:{
         type:String,
@@ -72,7 +72,7 @@ leaveSchema.virtual('employee', {
     ref: 'EmployeeSchema',
     localField: 'employeeId',
     foreignField: 'employeeId',
-    justOne: true // Since employeeId is unique, we want only one document
+    justOne: true
 });
 
 const Leave = mongoose.model('Leave',leaveSchema);

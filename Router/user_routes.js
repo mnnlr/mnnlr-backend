@@ -1,5 +1,5 @@
 import express from "express";
-import { registerValidator, loginValidator } from "../utils/validator.js";
+// import { registerValidator, loginValidator } from "../utils/validator.js";
 const router = express.Router();
 
 import {

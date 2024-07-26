@@ -1,5 +1,5 @@
 import Employee from "../Models/EmployeeModel.js";
-// import { ErrorHandler } from "../utils/errorHendler.js";
+
 const addEmployee = async (req, res,next) => {
     try {
         

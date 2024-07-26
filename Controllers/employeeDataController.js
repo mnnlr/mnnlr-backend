@@ -48,7 +48,7 @@ export const getEmployeeById = async (req, res, next) => {
       return next(new ErrorHandler(404, "Employee not found"));
     }
 
-    res.status(200).json({ employee, success: true });
+    res.status(200).json({ Data:employee, success: true });
   } catch (error) {
     next(new ErrorHandler(500, error.message));
   }

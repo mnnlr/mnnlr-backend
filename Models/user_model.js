@@ -1,20 +1,5 @@
-import { randomUUID } from "crypto";
 import mongoose from "mongoose";
 
-// const userChat = new mongoose.Schema({
-//   id: {
-//     type: String,
-//     default: randomUUID,
-//   },
-//   role: {
-//     type: String,
-//     required: true,
-//   },
-//   content: {
-//     type: String,
-//     required: true,
-//   },
-// });
 const userSchema = new mongoose.Schema(
   {
     email:{
@@ -36,14 +21,6 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    // loginTime: {
-    //   type: Date,
-    //   default: Date.now,
-    // },
-    // logoutTime: {
-    //   type: Date,
-    // },
-    // chat: [userChat],
   },
   { timestamps: true }
 );
