@@ -137,15 +137,15 @@ export const LogOut = async (req, res,next) => {
       
       
       const today = new Date().toISOString().split('T')[0]; // Start of today
-      
+
       const performance = await Performance.findOne({
             user_id: foundUser.id,
             date: today,
         });
-        console.log('login performance : ',performance)
+
         if (performance) {
 
-          const currentTime = new Date().toTimeString().split(' ')[0]
+          const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
           const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
       
           if (!timeEntry.timeOut) {
@@ -196,7 +196,7 @@ export const LogOut = async (req, res,next) => {
         
         if (performance) {
   
-          const currentTime = new Date().toTimeString().split(' ')[0]
+          const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
           const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
        
           if (!timeEntry.timeOut) {
