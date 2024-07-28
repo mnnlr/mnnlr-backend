@@ -96,23 +96,20 @@ const getAllPerformance = async (req, res, next) => {
 const AllEmployeeAttandance = async (req, res,next) => {
   try {
 
-    const {date} = req.query;
+    const { date } = req.query;
 
-    const attandanceDate = date ? new Date(date).toISOString().split('T')[0]:new Date().toISOString().split('T')[0];
-
+    const attandanceDate = date ? new Date(date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    
     const employees = await Employee.find({});
-    const performances = await Performance.find({date:attandanceDate});
-// console.log('performances : ',performances);
-    const employeeAttendance = employees.reduce(async(acc, employee) => {
-
+    const performances = await Performance.find({ date: attandanceDate });
+    
+    const employeeAttendance = await Promise.all(employees.map(async (employee) => {
       const { _id, firstName, avatar, designationLevel, employeeId, lastName, userId } = employee;
 
-      // Find all performance records for the current employee
-      const employeePerformances = performances.find(({ user_id }) => userId === user_id.toString());
-      
-      if (!employeePerformances) {
-        console.log('employee id : ',employee?._id);
-        acc.push({
+      const employeePerformance = performances.find(({ user_id }) => userId === user_id.toString());
+
+      if (!employeePerformance) {
+        return {
           _id,
           firstName,
           lastName,
@@ -121,15 +118,15 @@ const AllEmployeeAttandance = async (req, res,next) => {
           employeeId,
           designationLevel,
           attendance: [],
-        });
-        return acc;
+        };
       }
+    
+      const { calculatedAttendance } = await new Promise((resolve,reject)=>{
+        resolve(calculateTotalWorkingHours(employeePerformance));
+        // reject()
+      });
 
-      console.log('employee user id : ',_id)
-      console.log('employeePerformances : ',employeePerformances?.user_id);
-
-      const {calculatedAttendance} = calculateTotalWorkingHours(employeePerformances)
-      acc.push({
+      return {
         _id,
         firstName,
         lastName,
@@ -138,18 +135,16 @@ const AllEmployeeAttandance = async (req, res,next) => {
         employeeId,
         designationLevel,
         attendance: calculatedAttendance,
-      });
-      return acc;
-    }, []);
-  
+      };
+    }));
 
-    const result = await new Promise((resolve,reject)=>{
-      resolve(employeeAttendance)
-      reject([])
-    });
+    // const result = await new Promise((resolve,reject)=>{
+    //   resolve(employeeAttendance)
+    //   reject([])
+    // });
 
-    console.log('employeeAttendance123 : ',result);
-    res.status(200).json({ success: true, Data: result });
+    // console.log('employeeAttendance123 : ',result);
+    res.status(200).json({ success: true, Data: employeeAttendance });
   } catch (error) {
     console.log(error);
     next(error);
