@@ -104,7 +104,7 @@ const AllEmployeeAttandance = async (req, res,next) => {
     const performances = await Performance.find({ date: attandanceDate });
     
     const employeeAttendance = await Promise.all(employees.map(async (employee) => {
-      const { _id, firstName, avatar,email, designationLevel, employeeId, lastName, userId } = employee;
+      const { _id, firstName, avatar,email,designation, designationLevel, employeeId, lastName, userId } = employee;
 
       const employeePerformance = performances.find(({ user_id }) => userId === user_id.toString());
 
@@ -118,6 +118,7 @@ const AllEmployeeAttandance = async (req, res,next) => {
           userId,
           employeeId,
           designationLevel,
+          designation,
         };
       }
     
@@ -135,6 +136,7 @@ const AllEmployeeAttandance = async (req, res,next) => {
         email,
         employeeId,
         designationLevel,
+        designation,
         attendance: calculatedAttendance,
       };
     }));
