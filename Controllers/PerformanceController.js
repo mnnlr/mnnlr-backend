@@ -179,11 +179,11 @@ const EmployeeAttandanceById = async (req, res, next) => {
   
       ]
     );
-    const { _id:employeeDocId, firstName, avatar,designation,designationLevel,email, employeeId, lastName } = employee;
+    const { _id:employeeDocId, firstName, avatar,designation,designationLevel,phoneNo,email, employeeId, lastName } = employee;
     const {calculatedAttendance} = attandance ? await calculateTotalWorkingHours(attandance) : {calculatedAttendance:null};
     
 
-    return res.status(200).json({ success: true, Data: {...calculatedAttendance,employeeDocId, firstName, avatar,designation,email,designationLevel, employeeId, lastName} });
+    return res.status(200).json({ success: true, Data: {...calculatedAttendance,employeeDocId, firstName, avatar,designation,phoneNo,email,designationLevel, employeeId, lastName} });
 
   } catch (error) {
     console.log('error : ',error)
