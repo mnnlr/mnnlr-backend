@@ -117,7 +117,6 @@ const AllEmployeeAttandance = async (req, res,next) => {
           userId,
           employeeId,
           designationLevel,
-          attendance: [],
         };
       }
     
