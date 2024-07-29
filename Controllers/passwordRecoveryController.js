@@ -22,7 +22,7 @@ const sendLink = async(req,res,next) =>{
         //create jwt token for password recovery
 
         const message = `\n Please click on the given link to reset your password.This link is valid only for 30 minutes.
-         ${process.env.CLIENT_URL+'/reset-password/'+passwordRecoveryToken}\n\n
+         ${process.env.CLIENT_URL1+'/reset-password/'+passwordRecoveryToken}\n\n
         If you have not requested this email then, please ignore it `;
     
         await sendEmail(email, "Employee Id Generation", message);
