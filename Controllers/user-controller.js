@@ -52,7 +52,7 @@ export const userRegister = async (req, res) => {
 export const userLogin = async (req, res,next) => {
 
   try {
-    
+    console.log('login')
 
     const {username,password} = req.body;
 

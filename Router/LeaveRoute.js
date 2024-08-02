@@ -12,8 +12,8 @@ import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
 router
   .route("/")
-  .get(isAuthenticated, restrictMiddleware(["admin", "hr"]), getAllLeaveRequest)
-  .post(isAuthenticated, leaveRequest);
+  .get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaveRequest)
+  .post(isAuthenticated,restrictMiddleware(["admin", "hr","employee"]), leaveRequest);
 router
   .route("/:id")
   .get(isAuthenticated, getLeaveRequestById)

@@ -10,6 +10,7 @@ import configDotenv from "dotenv";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import morgan from 'morgan'
 import fs from "fs";
+import cron from "node-cron";
 // import path from "path";
 // import dashboardRoute from "./Router/statisticsRoute.js";
 
@@ -30,6 +31,15 @@ app.use(
     parameterLimit: 5000
   })
 );
+
+import { autoUpdateLeave } from "./utils/autoUpdateLeave.js";
+
+// cron.schedule('*/10 * * * * *', () => {
+//     autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
+// });
+cron.schedule('0 0 * * *', () => {
+    autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
+});
 
 app.use(bodyParser.json());
 

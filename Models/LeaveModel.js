@@ -1,78 +1,67 @@
 import mongoose from "mongoose";
 
 const leaveSchema = new mongoose.Schema({
-    id:{ type: mongoose.Schema.Types.ObjectId, ref: 'EmployeeSchema' },
-    // employeeId:{
-    //     type:String,
-    //     ref:"EmployeeSchema",
-    //     required:true
-    // },
-    
-    typeOfLeave:{
-        type:String,
-        enum:["sick","casual"],
-        required:true
+    // id: { type: mongoose.Schema.Types.ObjectId, ref: "EmployeeSchema" },
+    employeeId: {
+      type: String,
+      ref: "EmployeeSchema",
+    },
+    casualLeaveAppliedLastTime: {
+      type: Date,
     },
 
-    casualLeaveAppliedLastTime:{
-        type:Date
+    sickLeaveAppliedLastTime: {
+      type: Date,
     },
 
-    sickLeaveAppliedLastTime:{
-        type:Date
+    casualLeaveBalance: {
+      type: Number,
+      default: 0,
     },
 
-    casualLeaveBalance:{
-        type:Number,
-        default:0
+    sickLeaveBalance: {
+      type: Number,
+      default: 0,
     },
 
-    sickLeaveBalance:{
-        type:Number,
-        default:0
+    totalCasualLeaveUsed: {
+      type: Number,
+      default: 0,
+      max: [12, "You have exhausted your casual leaves"],
     },
 
-    totalCasualLeaveUsed:{
-        type:Number,
-        default:0,
-        max:[12,"You have exhausted your casual leaves"]
+    totalSickLeaveUsed: {
+      type: Number,
+      default: 0,
+      max: [12, "You have exhausted your sick leaves"],
     },
 
-    totalSickLeaveUsed:{
-        type:Number,
-        default:0,
-        max:[12,"You have exhausted your sick leaves"]
-    },
+    leavesDetails: [
+      {
+        startDate: {
+          type: Date,
+        },
+        endDate: {
+          type: Date,
+        },
+        typeOfLeave: {
+          type: String,
+          enum: ["sick", "casual"],
+        },
+        reason: {
+          type: String,
+        },
+        status: {
+          type: String,
+          enum: ["approved", "rejected", "pending"],
+          default: "pending",
+        },
+      },
+    ],
 
-    startDate:{
-        type:Date,
-        required:true
-    },
-
-    endDate:{
-        type:Date,
-        required:true
-    },
-
-    reason:{
-        type:String,
-        required:true
-    },
-
-    status:{
-        type:String,
-        enum:["approved","rejected","pending"],
-        default:"pending"
-    }
-},{
-    timestamps:true
-})
-
-leaveSchema.virtual('employee', {
-    ref: 'EmployeeSchema',
-    localField: 'employeeId',
-    foreignField: 'employeeId',
-    justOne: true
+  },
+  {
+    timestamps: true,
 });
 
 const Leave = mongoose.model('Leave',leaveSchema);
