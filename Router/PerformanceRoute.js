@@ -13,7 +13,10 @@ import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
 router
   .route("/")
-  .get(isAuthenticated, restrictMiddleware(["admin", "hr"]), getAllPerformance);
+  .get(
+    // isAuthenticated, restrictMiddleware(["admin", "hr"]), 
+    getAllPerformance
+  );
 router
   .route("/rank")
   .get(

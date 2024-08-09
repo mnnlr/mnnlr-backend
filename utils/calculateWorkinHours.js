@@ -32,7 +32,7 @@ async function calculateTotalWorkingHours(attandance, period) {
 
   const attandanceObj = attandance.toObject();
   
-
+console.log('attandanceObj : ',attandanceObj)
   calculatedAttendance = { ...attandanceObj, timeTracking: [] };
 
   attandanceObj.timeTracking.forEach(entry => {

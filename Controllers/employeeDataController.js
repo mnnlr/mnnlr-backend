@@ -109,6 +109,30 @@ export const deleteOneEmployee = async(req,res) => {
 
 export const createEmployeeDetails = async (req, res) => {
   try {
+
+    // console.log('employeeDetails',req.body)
+    // return res.status(200).json({success:true,message:'Data Saved Successfully'});
+    const {
+      firstName,
+      lastName,
+      fatherName,
+      motherName,
+      address,
+      phoneNo,
+      email,
+      description,
+      designation,
+      designationLevel,
+      employeeId,
+    } = req.body;
+    console.log({firstName,lastName,fatherName,motherName,address,phoneNo,email,description,designation,designationLevel,employeeId})
+    
+    if(!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId){
+      return res.status(400).json({success:false,message:'All fields are required'})
+    }
+
+    // return res.status(200).json({success:true,message:'Data Saved Successfully'});
+    
     let myCloud1 = "";
     let myCloud = "";
 
@@ -218,20 +242,6 @@ export const createEmployeeDetails = async (req, res) => {
       });
     }
 
-    const {
-      firstName,
-      lastName,
-      fatherName,
-      motherName,
-      address,
-      phoneNo,
-      email,
-      description,
-      designation,
-      designationLevel,
-      employeeId,
-    } = req.body;
-
     const hashedPassword = await hash("password", 10);
 
     const User = await user.create({
@@ -291,7 +301,7 @@ export const createEmployeeDetails = async (req, res) => {
         url: myCloud8.secure_url,
       },
     });
-    console.log('test 13')
+
     //Logic for sending employeeid , Offer Letter and Generating Pdf
     if (employeeDetails._id) {
       // --------------------------------------------------------------------------------------------------->

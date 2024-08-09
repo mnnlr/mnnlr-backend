@@ -1,7 +1,6 @@
 import Performance from "../Models/PerformanceModel.js";
 
 import user_model from "../Models/user_model.js";
-import user from "../Models/user_model.js";
 
 import { validationResult } from "express-validator";
 import hash from "crypto";
@@ -15,7 +14,7 @@ import jwt from "jsonwebtoken";
 
 export const getAllUser = async (req, res) => {
   try {
-    const users = await user.find();
+    const users = await user_model.find();
     res.status(200).json({ message: "ok", users });
   } catch (error) {
 
@@ -70,19 +69,30 @@ export const userLogin = async (req, res,next) => {
 
       const today = new Date().toISOString().split('T')[0];
       const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
-      await Performance.findOneAndUpdate(
-        {  
-          user_id: foundUser._id, 
-          date: today,  
-        },
-        { 
-          $push: { timeTracking: { timeIn: currentTime } } 
-        },
-        { 
-          new: true, 
-          upsert: true 
+      
+      const performance = await Performance.findOne({
+        user_id: foundUser._id,
+        date: today,
+      });
+
+      if (!performance) {
+        await Performance.create({
+          user_id: foundUser._id,
+          date: today,
+          timeTracking: [{ timeIn: currentTime }],
+        });
+      } else {
+        const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+        if (!timeEntry) {
+          performance.timeTracking.push({ timeIn: currentTime });
+        } else {
+          timeEntry.timeOut = currentTime;
+          performance.timeTracking.push({ timeIn: currentTime });
         }
-      );
+
+        await performance.save();
+
+      }
 
     const {password:_,refreshToken,...rest} = foundUser._doc;
 

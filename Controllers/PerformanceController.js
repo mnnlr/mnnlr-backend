@@ -9,85 +9,253 @@ import { ErrorHandler } from "../utils/errorHendler.js";
 const getAllPerformance = async (req, res, next) => {
   try {
 
-      const {period='today'} = req.query;
-      console.log('period : ',period)
-
-      const now = new Date();
-      let startDate;
-
-      switch (period) {
-        case "today":
-          startDate = new Date(now.setHours(0, 0, 0, 0));
-          break;
-        case "yesterday":
-          startDate = new Date(now.setDate(now.getDate() - 1));
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case "week":
-          startDate = new Date(now.setDate(now.getDate() - now.getDay()));
-          startDate.setHours(0, 0, 0, 0);
-          break;
-        case "month":
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          break;
-        case "year":
-          startDate = new Date(now.getFullYear(), 0, 1);
-          break;
-        default:
-          throw new Error("Invalid period specified.");
+    const { period = 'yesterday' } = req.query;
+    
+    const now = new Date();
+    let startDate;
+    let endDate = new Date();
+    
+    switch (period) {
+      case "today":
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+        break;
+      case "yesterday":
+        startDate = new Date(now.setDate(now.getDate() - 1));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "week":
+        startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "year":
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        throw new Error("Invalid period specified.");
+    }
+    
+    startDate = startDate.toISOString();
+    endDate = endDate.toISOString();
+    
+    const result = await Employee.aggregate([
+      {
+        $addFields: {
+          userId: { "$toObjectId": "$userId" }
+        }
+      },
+      {
+        $lookup: {
+          from: "performances",
+          localField: "userId",
+          foreignField: "user_id",
+          as: "employeeDetails",
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          avatar: 1,
+          userId: 1,
+          employeeId: 1,
+          designationLevel: 1,
+          designation: 1,
+          attendance: {
+            $map: {
+              input: "$employeeDetails",
+              as: "detail",
+              in: {
+                _id: "$$detail._id",
+                user_id: "$$detail.user_id",
+                date: "$$detail.date",
+                timeTracking: {
+                  $map: {
+                    input: "$$detail.timeTracking",
+                    as: "time",
+                    in: {
+                      timeIn: "$$time.timeIn",
+                      timeOut: {
+                        $ifNull: [
+                          "$$time.timeOut",
+                          {
+                            $dateToString: {
+                              format: "%H:%M:%S",
+                              date: { $dateAdd: { startDate: "$$detail.date", unit: "second", amount: 1 } }
+                            } 
+                          }
+                        ]
+                      },
+                      duration: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                },
+                totalDuration: {
+                  $sum: {
+                    $map: {
+                      input: "$$detail.timeTracking",
+                      as: "time",
+                      in: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          totalDuration: {
+            $sum: {
+              $map: {
+                input: "$employeeDetails",
+                as: "detail",
+                in: {
+                  $sum: {
+                    $map: {
+                      input: "$$detail.timeTracking",
+                      as: "time",
+                      in: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-
-    const employees = await Employee.find({})
-    const performances = await Performance.find({
-      date: { $gte: startDate },
-    })
-
-    const employeeAttendence = employees.reduce((acc, employee) => {
-      const { _id, firstName,avatar,designationLevel,employeeId,lastName, userId } = employee;
+    ]);
     
-      // Find all performance records for the current employee
-      const employeePerformances = performances.filter(({ user_id }) => userId === user_id.toString());
-      console.log('employeePerformances : ',employeePerformances);
-
-      // Group the performances by date
-      const groupedPerformances = employeePerformances.reduce((groupAcc, performance) => {
-        const { date, timeTracking } = performance;
-        const dateString = new Date(date).toISOString().split('T')[0]; // Convert date to ISO string and extract the date part
+   
+    res.status(200).json({ success: true, Data: result });
     
-        if (!groupAcc['attendence']) {
-          groupAcc['attendence'] = [{
-            date: dateString,
-            Data:[]
-          }];
-        }
-        const group = groupAcc['attendence'].find(group => group.date === dateString);
-        if (!group) {
-          groupAcc['attendence'].push({
-            date: dateString,
-            Data: timeTracking,
-          });
-        }
-        if (group) {
-          group.Data = [...group.Data, ...timeTracking];
-        }
-        return groupAcc;
-      }, {});
-    
-      acc.push({
-        _id,
-        firstName,
-        lastName,
-        avatar,
-        userId,
-        employeeId,
-        designationLevel,
-        attendance: groupedPerformances.attendence,
-      });
-    
-      return acc;
-    }, []);
-
-    res.status(200).json({ success: true, employeeAttendence });
   } catch (error) {
     next(error);
   }
@@ -107,7 +275,7 @@ const AllEmployeeAttandance = async (req, res,next) => {
       const { _id, firstName, avatar,email,designation, designationLevel, employeeId, lastName, userId } = employee;
 
       const employeePerformance = performances.find(({ user_id }) => userId === user_id.toString());
-
+      
       if (!employeePerformance) {
         return {
           _id,
@@ -141,15 +309,8 @@ const AllEmployeeAttandance = async (req, res,next) => {
       };
     }));
 
-    // const result = await new Promise((resolve,reject)=>{
-    //   resolve(employeeAttendance)
-    //   reject([])
-    // });
-
-    // console.log('employeeAttendance123 : ',result);
     res.status(200).json({ success: true, Data: employeeAttendance });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -186,7 +347,6 @@ const EmployeeAttandanceById = async (req, res, next) => {
     return res.status(200).json({ success: true, Data: {...calculatedAttendance,employeeDocId, firstName, avatar,designation,phoneNo,email,designationLevel, employeeId, lastName} });
 
   } catch (error) {
-    console.log('error : ',error)
     next(error);
   }
 };
