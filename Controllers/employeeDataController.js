@@ -257,7 +257,7 @@ export const createEmployeeDetails = async (req, res) => {
       fatherName,
       motherName,
       address,
-      phoneNo,
+      phoneNo:Number(phoneNo),
       email,
       description,
       designation,
