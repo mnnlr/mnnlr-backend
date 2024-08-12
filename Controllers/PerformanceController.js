@@ -9,7 +9,7 @@ import { ErrorHandler } from "../utils/errorHendler.js";
 const getAllPerformance = async (req, res, next) => {
   try {
 
-    const { period = 'yesterday' } = req.query;
+    const { period = 'today' } = req.query;
     
     const now = new Date();
     let startDate;
@@ -47,8 +47,8 @@ const getAllPerformance = async (req, res, next) => {
         throw new Error("Invalid period specified.");
     }
     
-    startDate = startDate.toISOString();
-    endDate = endDate.toISOString();
+    // startDate = startDate.toISOString();
+    // endDate = endDate.toISOString();
     
     const result = await Employee.aggregate([
       {
@@ -70,10 +70,17 @@ const getAllPerformance = async (req, res, next) => {
           firstName: 1,
           lastName: 1,
           avatar: 1,
+          email: 1,
           userId: 1,
           employeeId: 1,
           designationLevel: 1,
           designation: 1,
+          employeedOn:{
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt"
+            }
+          },
           attendance: {
             $map: {
               input: "$employeeDetails",
@@ -193,7 +200,7 @@ const getAllPerformance = async (req, res, next) => {
               }
             }
           },
-          totalDuration: {
+          totalWorkingTime: {
             $sum: {
               $map: {
                 input: "$employeeDetails",
@@ -248,13 +255,23 @@ const getAllPerformance = async (req, res, next) => {
                 }
               }
             }
-          }
+          },
         }
-      }
+      },
+      {
+        $sort: { totalWorkingTime: -1 }
+      },
+      {
+        $group: {
+          _id: null,
+          employeePerformances: { $push: "$$ROOT" },
+          totalWorkingTimeOfAllEmployee: { $sum: "$totalWorkingTime" }
+        }
+      },
     ]);
     
    
-    res.status(200).json({ success: true, Data: result });
+    res.status(200).json({ success: true, Data: result[0] });
     
   } catch (error) {
     next(error);
