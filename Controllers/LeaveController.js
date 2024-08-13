@@ -10,27 +10,64 @@ const getAllLeaveRequest = async(req,res,next) => {
         
         const employeeLeave = allRequest.flatMap(request => {
             const {
-                employeeId: { avatar, email, firstName, lastName, employeeId },
+                employeeId: {_id,avatar, email,designation,designationLevel,firstName, lastName, employeeId },
                 leavesDetails
             } = request;
-        
-            return leavesDetails.map(leave => ({
-                employeeId: employeeId,
-                avatar: avatar,
-                name: `${firstName} ${lastName}`,
-                email: email,
-                duration:Math.abs(new Date(leave?.endDate) - new Date(leave?.startDate)) / (1000 * 60 * 60 * 24)+1,
-                leaveType: leave.typeOfLeave.charAt(0).toUpperCase() + leave.typeOfLeave.slice(1), // Capitalize first letter
-                startDate: leave.startDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
-                endDate: leave.endDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
-                status: leave.status.charAt(0).toUpperCase() + leave.status.slice(1), // Capitalize first letter
-                leaveBalance: 1, // Assuming a default value of 1 for demonstration
-                dateApplied: leave._id.getTimestamp().toISOString().split('T')[0], // Assuming leave._id contains timestamp
-                reason: leave.reason,
-                approverComments: "" // Assuming an empty string for demonstration
-            }));
+            // const pendingLeaves = leavesDetails?.filter(leave => leave?.status === 'pending');
+            // console.log('pendingLeaves : ',pendingLeaves?.length)
+            // console.log('leavesDetails : ',leavesDetails?.length)
+            // if (pendingLeaves?.length === 0 && leavesDetails?.length !== 0) {
+            //     console.log('no pendingLeaves')
+            //     return {
+            //         _id,
+            //         employeeId: employeeId,
+            //         avatar: avatar,
+            //         name: `${firstName} ${lastName}`,
+            //         email: email,
+            //         leavesDetails,
+            //         duration: leavesDetails[0]?.endDate - leavesDetails[0]?.startDate, // Assuming the duration is in milliseconds
+            //         leaveType: leavesDetails[0]?.typeOfLeave.charAt(0).toUpperCase() + leavesDetails[0]?.typeOfLeave.slice(1), // Capitalize first letter
+            //         startDate: leavesDetails[0]?.startDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
+            //         endDate: leavesDetails[0]?.endDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
+            //         status: leavesDetails[0]?.status.charAt(0).toUpperCase() + leavesDetails[0]?.status.slice(1), // Capitalize first letter
+            //         leaveBalance: leavesDetails?.sickLeaveBalance + leavesDetails?.casualLeaveBalance,
+            //         dateApplied: leavesDetails[0]?._id.getTimestamp().toISOString().split('T')[0], // Assuming leave._id contains timestamp
+            //         reason: leavesDetails[0]?.reason,
+            //         approverComments: ''
+            //     };
+            // }
+
+            // if(pendingLeaves?.length !== 0){
+
+            //     console.log('we have pendingLeaves : ',pendingLeaves?.length)
+                // console.log('sick leave balance : ',leavesDetails)
+                // console.log('casual leave balance : ',leavesDetails?.casualLeaveBalance)
+                return leavesDetails.map(leave => ({
+                    _id,
+                    leaveId: leave._id,
+                    employeeId: employeeId,
+                    designation,
+                    designationLevel,
+                    avatar: avatar,
+                    name: `${firstName} ${lastName}`,
+                    email: email,
+                    leavesDetails,
+                    sickLeaveBalance: request?.sickLeaveBalance,
+                    totalSickLeaveUsed: request?.totalSickLeaveUsed,
+                    casualLeaveBalance: request?.casualLeaveBalance,
+                    totalCasualLeaveUsed: request?.totalCasualLeaveUsed,
+                    duration:Math.abs(new Date(leave?.endDate) - new Date(leave?.startDate)) / (1000 * 60 * 60 * 24)+1,
+                    leaveType: leave.typeOfLeave.charAt(0).toUpperCase() + leave.typeOfLeave.slice(1), // Capitalize first letter
+                    startDate: leave.startDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
+                    endDate: leave.endDate.toISOString().split('T')[0], // Format to YYYY-MM-DD
+                    status: leave.status.charAt(0).toUpperCase() + leave.status.slice(1), // Capitalize first letter
+                    leaveBalance: request?.sickLeaveBalance + request?.casualLeaveBalance, // Assuming a default value of 1 for demonstration
+                    dateApplied: leave._id.getTimestamp().toISOString().split('T')[0], // Assuming leave._id contains timestamp
+                    reason: leave.reason,
+                    approverComments: "" // Assuming an empty string for demonstration
+                }));
+            // }
         });
-        console.log('employeeLeave : ',employeeLeave.length)
         res.status(200).json({ message: "get all Request",Data:employeeLeave })
     } catch (error) {
         console.log('error : ',error)
@@ -113,13 +150,6 @@ const leaveRequest = async(req,res,next) => {
 
         
         await Leave.findOneAndUpdate({employeeId:employee?._id},{
-
-            sickLeaveBalance:typeOfLeave === 'sick'?(leaveRequest?.sickLeaveBalance - totalDays):leaveRequest?.sickLeaveBalance,
-            casualLeaveBalance:typeOfLeave === 'casual'?(leaveRequest?.casualLeaveBalance - totalDays):leaveRequest?.casualLeaveBalance,
-
-            totalCasualLeaveUsed:typeOfLeave === 'casual'?leaveRequest?.totalCasualLeaveUsed + totalDays:leaveRequest?.totalCasualLeaveUsed,
-            totalSickLeaveUsed:typeOfLeave === 'sick'?leaveRequest?.totalSickLeaveUsed + totalDays:leaveRequest?.totalSickLeaveUsed,
-
             sickLeaveAppliedLastTime:typeOfLeave === 'sick'?new Date():leaveRequest?.sickLeaveAppliedLastTime,
             casualLeaveAppliedLastTime:typeOfLeave === 'casual'?new Date():leaveRequest?.casualLeaveAppliedLastTime,
 
@@ -142,37 +172,48 @@ const approveLeaveRequest = async(req,res,next) => {
     try {
 
         const {id} = req.params;
-        const {status} = req.body;
+   
+        const {reviewStatus,leaveId} = req.body;
 
-        if(!id){
-            return next(new ErrorHandler(400, "Please provide an id"));
+        if(!id || !reviewStatus.toString() || !leaveId){
+            return next(new ErrorHandler(400, "Please provide all the details"));
         }
-
-        const leaveRequest = await Leave.findOne({id:id,status:"pending"});
-
+       
+        const leaveRequest = await Leave.findOne({employeeId:id,leavesDetails:{$elemMatch:{_id:leaveId,status:"pending"}}});
+        
         if(!leaveRequest){
             return next(new ErrorHandler(404, "Request not found"));
         }
+
+        const pendingLeave = leaveRequest?.leavesDetails.find(leave => leave?._id?.toString() === leaveId);
+      
         
-        if(status === true){
-            if(leaveRequest.typeOfLeave === "sick"){
-                const totalDays = Math.abs(new Date(leaveRequest?.endDate) - new Date(leaveRequest?.startDate)) / (1000 * 60 * 60 * 24);
-
-                await Leave.findOneAndUpdate({id:id},{sickLeaveBalance:leaveRequest.sickLeaveBalance-totalDays,status:"approved"},{new:true});
-                return res.status(200).json({ message: "Employee Leave Request Approved",success:true });
-            }
-            
-            if(leaveRequest.typeOfLeave === "casual"){
-                const totalDays = Math.abs(new Date(leaveRequest?.endDate) - new Date(leaveRequest?.startDate)) / (1000 * 60 * 60 * 24);
-
-                await Leave.findOneAndUpdate({id:id},{casualLeaveBalance:leaveRequest.casualLeaveBalance-totalDays,status:"approved"},{new:true});
-                return res.status(200).json({ message: "Employee Leave Request Approved",success:true });
-            }
+        if(!pendingLeave?._id){
+            return next(new ErrorHandler(404, "Request not found"));
         }
-            if(status === false){
-                await Leave.findOneAndUpdate({id:id},{status:"rejected"},{new:true});
-                return res.status(200).json({ message: "Employee Leave Request Rejected",success:false });
-            }
+        
+        if(reviewStatus === false){
+            await Leave.findOneAndUpdate({employeeId:id,"leavesDetails._id":leaveId},{$set:{"leavesDetails.$.status":"rejected"}},{new:true});
+            return res.status(200).json({ message: "Employee Leave Request Rejected",success:false });
+        }
+
+        if(reviewStatus === true){
+
+            const totalDays = Math.abs(new Date(pendingLeave?.endDate) - new Date(pendingLeave?.startDate)) / (1000 * 60 * 60 * 24)+1;
+
+            await Leave.findOneAndUpdate(
+                {employeeId:id,"leavesDetails._id":leaveId},
+                {
+                    sickLeaveBalance:pendingLeave.typeOfLeave === "sick" ? leaveRequest.sickLeaveBalance-totalDays : leaveRequest.sickLeaveBalance,
+                    casualLeaveBalance:pendingLeave.typeOfLeave === "casual" ? leaveRequest.casualLeaveBalance-totalDays : leaveRequest.casualLeaveBalance,
+                    totalCasualLeaveUsed:pendingLeave.typeOfLeave === "casual" ? leaveRequest.totalCasualLeaveUsed + totalDays : leaveRequest.totalCasualLeaveUsed,
+                    totalSickLeaveUsed:pendingLeave.typeOfLeave === "sick" ? leaveRequest.totalSickLeaveUsed + totalDays : leaveRequest.totalSickLeaveUsed,
+                    $set:{"leavesDetails.$.status":"approved"}
+                },
+                {new:true}
+            );
+            return res.status(200).json({ message: "Employee Leave Request Approved",success:true });
+        }
 
     } catch (error) {
 
