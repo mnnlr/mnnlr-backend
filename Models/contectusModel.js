@@ -10,10 +10,10 @@ const contectusSchema = new mongoose.Schema({
     require: true,
     unique: true,
   },
-  phoneNo: {
-    type: Number,
-    require: true,
-  },
+  // phoneNo: {
+  //   type: Number,
+  //   require: true,
+  // },
 
   message: {
     type: String,

@@ -3,24 +3,25 @@ import { ErrorHandler } from "../utils/errorHendler.js";
 
 export const contectus = async (req, res, next) => {
   try {
-    const { name, email, phoneNo, message } = req.body;
+    const { name, email, message } = req.body;
 
-    if (!phoneNo || !email)
+    if (!name || !email || !message)
       return next(
-        new ErrorHandler(400, "please provide phone number and email")
+        new ErrorHandler(400, "please provide all required fields")
       );
 
     await ContactUs.create({
       name,
       email,
-      phoneNo,
+      // phoneNo,
       message,
     });
 
     res.status(200).json({
       success: true,
-      message: "Data Sent Successfully",
+      message: "contact stabilized successfully",
     });
+    
   } catch (error) {
     next(error);
   }

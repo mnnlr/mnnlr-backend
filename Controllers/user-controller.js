@@ -3,7 +3,7 @@ import Performance from "../Models/PerformanceModel.js";
 import user_model from "../Models/user_model.js";
 
 import { validationResult } from "express-validator";
-import hash from "crypto";
+import { hash } from "bcrypt";
 
 import {ErrorHandler} from '../utils/errorHendler.js'
 import bcrypt from 'bcrypt'
@@ -23,35 +23,40 @@ export const getAllUser = async (req, res) => {
 };
 
 export const userRegister = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({ errors: errors.array() });
-  }
-
-  const { name, email, password } = req.body;
-
+  
   try {
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    const { email, password } = req.body;
+
     let existingUser = await user_model.findOne({ email });
+
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      return res.status(409).json({ success:false,message: "User already exists" });
     }
 
     const hashedPassword = await hash(password, 10);
-    const newUser = new user_model({ email, name, password: hashedPassword });
+
+    const newUser = new user_model({ username:email,email, password: hashedPassword });
     await newUser.save();
-    return res.status(200).json({ message: "User stored successfully" });
+
+    return res.status(200).json({ success:true,message: "User stored successfully" });
+    
   } catch (error) {
-    console.log(error);
     return res
       .status(500)
-      .json({ message: "Error saving user data", cause: error.message });
+      .json({ message:error.message , cause: error.message });
   }
 };
 
 export const userLogin = async (req, res,next) => {
 
   try {
-    console.log('login')
 
     const {username,password} = req.body;
 
