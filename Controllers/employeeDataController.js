@@ -24,7 +24,7 @@ import base64StringToFile from "../utils/getFileFromBase64.js";
 export const getAllEmployee = async (req, res) => {
   try {
     const employee = await EmployeeSchema.find({});
-    res.status(200).json({ success: true, Data:employee });
+    res.status(200).json({ success: true, Data: employee });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -48,7 +48,7 @@ export const getEmployeeById = async (req, res, next) => {
       return next(new ErrorHandler(404, "Employee not found"));
     }
 
-    res.status(200).json({ Data:employee, success: true });
+    res.status(200).json({ Data: employee, success: true });
   } catch (error) {
     next(new ErrorHandler(500, error.message));
   }
@@ -57,29 +57,253 @@ export const getEmployeeById = async (req, res, next) => {
 export const getEmployeeByUserId = async (req, res, next) => {
   try {
 
-    const {_id} = req.user;
+    const { _id } = req.user;
 
-    const employee = await EmployeeSchema.findOne({userId:_id});
+    const employee = await EmployeeSchema.findOne({ userId: _id });
     if (!employee) {
       return next(new ErrorHandler(404, "Employee not found"));
     }
 
-    res.status(200).json({ Data:employee, success: true });
+    res.status(200).json({ Data: employee, success: true });
   } catch (error) {
     next(new ErrorHandler(500, error.message));
   }
 };
 
-export const deleteOneEmployee = async(req,res) => {
+export const updateOneEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // console.log(req.body)
+    // console.log(id)
+
+    let myCloud1 = "";
+    let myCloud = "";
+    let updatedData = req.body;
+
+    if (req.body.aadhar) {
+      myCloud1 = await cloudinary.v2.uploader.upload(req.body.aadhar, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud1) {
+        updatedData = {
+          ...updatedData,
+          aadhar: {
+            public_id: myCloud1.public_id,
+            url: myCloud1.secure_url,
+          },
+        };
+      }
+    }
+
+    if (req.body.avatar) {
+      myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+        folder: "avatars",
+        width: 150,
+        crop: "scale",
+      });
+
+      if (myCloud) {
+        updatedData = {
+          ...updatedData,
+          avatar: {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
+          },
+        }
+      }
+    }
+
+    let myCloud2 = "";
+    if (req.body.pan) {
+      myCloud2 = await cloudinary.v2.uploader.upload(req.body.pan, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud2) {
+        updatedData = {
+          ...updatedData,
+          pan: {
+            public_id: myCloud2.public_id,
+            url: myCloud2.secure_url,
+          },
+        };
+      }
+    }
+
+    let myCloud3 = "";
+    if (req.body.Bank) {
+      myCloud3 = await cloudinary.v2.uploader.upload(req.body.Bank, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud3) {
+        updatedData = {
+          ...updatedData,
+          Bank: {
+            public_id: myCloud3.public_id,
+            url: myCloud3.secure_url,
+          }
+        }
+      }
+    }
+
+    let myCloud4 = "";
+    if (req.body.PF) {
+      myCloud4 = await cloudinary.v2.uploader.upload(req.body.PF, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud4) {
+        updatedData = {
+          ...updatedData,
+          PF: {
+            public_id: myCloud4.public_id,
+            url: myCloud4.secure_url,
+          }
+        }
+      }
+    }
+
+    let myCloud5 = "";
+    if (req.body.xthMarksheet) {
+      myCloud5 = await cloudinary.v2.uploader.upload(req.body.xthMarksheet, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud5) {
+        updatedData = {
+          ...updatedData,
+          xthMarksheet: {
+            public_id: myCloud5.public_id,
+            url: myCloud5.secure_url,
+          }
+        }
+      }
+    }
+
+    let myCloud6 = "";
+    if (req.body.xiithMarksheet) {
+      myCloud6 = await cloudinary.v2.uploader.upload(req.body.xiithMarksheet, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud6) {
+        updatedData = {
+          ...updatedData,
+          xiithMarksheet: {
+            public_id: myCloud6.public_id,
+            url: myCloud6.secure_url,
+          }
+        }
+      }
+    }
+
+    let myCloud7 = "";
+    if (req.body.graduationMarksheet) {
+      myCloud7 = await cloudinary.v2.uploader.upload(
+        req.body.graduationMarksheet,
+        {
+          resource_type: "auto",
+          folder: "files",
+          // width: 150,
+          // crop: "scale",
+          // format: "pdf", // Change format to PDF
+          overwrite: true,
+        }
+      );
+
+      if (myCloud7) {
+        updatedData = {
+          ...updatedData,
+          graduationMarksheet: {
+            public_id: myCloud7.public_id,
+            url: myCloud7.secure_url,
+          }
+        }
+      }
+    }
+
+    let myCloud8 = "";
+    if (req.body.pgMarksheet) {
+      myCloud8 = await cloudinary.v2.uploader.upload(req.body.pgMarksheet, {
+        resource_type: "auto",
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
+      });
+
+      if (myCloud8) {
+        updatedData = {
+          ...updatedData,
+          pgMarksheet: {
+            public_id: myCloud8.public_id,
+            url: myCloud8.secure_url,
+          }
+        }
+      }
+
+    }
+
+    console.log(updatedData);
+
+    const employeeUpdated = await EmployeeSchema.findByIdAndUpdate(id, updatedData, {
+      new: true,
+    });
+
+    if (employeeUpdated) {
+      res.status(201).json({ success: true, data: employeeUpdated, message: `Employee ${employeeUpdated.employeeId}-${employeeUpdated.name} updated successfully` });
+    }
+
+  } catch (err) {
+    console.log("Error in updateOneEmployee controller: ", err)
+    res.status(500).json({ success: false, message: "Error in updateOneEmployee controller: " + err.message })
+  }
+}
+
+export const deleteOneEmployee = async (req, res) => {
   try {
 
-    const {id} = req.params;
-    
+    const { id } = req.params;
+
     // we can delete leave of this employee here
-    await Leave.findOneAndDelete({id:id})
+    await Leave.findOneAndDelete({ id: id })
 
     //we can delete attendence of employee here    
-    await Performance.findOneAndDelete({employeeDocId:id})
+    await Performance.findOneAndDelete({ employeeDocId: id })
 
     //we can delete employee team here
     const deleteResult = await Team.deleteOne({
@@ -93,17 +317,17 @@ export const deleteOneEmployee = async(req,res) => {
         { $pull: { teamMembers: { 'Id': id } } }
       );
     }
-     //we can delete employee here
-     const employee = await EmployeeSchema.findByIdAndDelete(id);
+    //we can delete employee here
+    const employee = await EmployeeSchema.findByIdAndDelete(id);
 
     // we can delete login credential of employee here
-    await User.findOneAndDelete({_id:employee?.userId})
+    await User.findOneAndDelete({ _id: employee?.userId })
 
-    res.status(200).json({success:true,message:'employee deleted successfully...'})
+    res.status(200).json({ success: true, message: 'employee deleted successfully...' })
 
   } catch (error) {
     console.log(error)
-    res.status(500).json({success:true,message:error.message})
+    res.status(500).json({ success: true, message: error.message })
   }
 }
 
@@ -125,14 +349,14 @@ export const createEmployeeDetails = async (req, res) => {
       designationLevel,
       employeeId,
     } = req.body;
-    console.log({firstName,lastName,fatherName,motherName,address,phoneNo,email,description,designation,designationLevel,employeeId})
-    
-    if(!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId){
-      return res.status(400).json({success:false,message:'All fields are required'})
+    console.log({ firstName, lastName, fatherName, motherName, address, phoneNo, email, description, designation, designationLevel, employeeId })
+
+    if (!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId) {
+      return res.status(400).json({ success: false, message: 'All fields are required' })
     }
 
     // return res.status(200).json({success:true,message:'Data Saved Successfully'});
-    
+
     let myCloud1 = "";
     let myCloud = "";
 
@@ -154,7 +378,7 @@ export const createEmployeeDetails = async (req, res) => {
         crop: "scale",
       });
     }
-    
+
     let myCloud2 = "";
     if (req.body.pan) {
       myCloud2 = await cloudinary.v2.uploader.upload(req.body.pan, {
@@ -207,7 +431,7 @@ export const createEmployeeDetails = async (req, res) => {
     if (req.body.xiithMarksheet) {
       myCloud6 = await cloudinary.v2.uploader.upload(req.body.xiithMarksheet, {
         resource_type: "auto",
-        folder: "files", 
+        folder: "files",
         // width: 150,
         // crop: "scale",
         format: "pdf", // Change format to PDF
@@ -234,18 +458,18 @@ export const createEmployeeDetails = async (req, res) => {
     if (req.body.pgMarksheet) {
       myCloud8 = await cloudinary.v2.uploader.upload(req.body.pgMarksheet, {
         resource_type: "auto",
-          folder: "files",
-          // width: 150,
-          // crop: "scale",
-          // format: "pdf", // Change format to PDF
-          overwrite: true,
+        folder: "files",
+        // width: 150,
+        // crop: "scale",
+        // format: "pdf", // Change format to PDF
+        overwrite: true,
       });
     }
 
     const hashedPassword = await hash("password", 10);
 
     const User = await user.create({
-      email:email,
+      email: email,
       username: employeeId,
       password: hashedPassword,
       role: "employee",
@@ -257,7 +481,7 @@ export const createEmployeeDetails = async (req, res) => {
       fatherName,
       motherName,
       address,
-      phoneNo:Number(phoneNo),
+      phoneNo: Number(phoneNo),
       email,
       description,
       designation,
@@ -499,20 +723,20 @@ export const createEmployeeDetails = async (req, res) => {
       console.log('test 14')
       const message = `\n Your temporary Username and Password are :- ${employeeId} and ${"password"}' \n\n 
     If you have not requested this email then, please ignore it `;
-    console.log('test 15')
-    await sendEmail(email, "Employee Id Generation", message);
-    console.log('test 16')
-  
-//       const message1 = `Dear ${firstName + " " + lastName},
+      console.log('test 15')
+      await sendEmail(email, "Employee Id Generation", message);
+      console.log('test 16')
 
-// I hope this email finds you well. I am writing to you on behalf of MNNLR, an innovative startup company.
+      //       const message1 = `Dear ${firstName + " " + lastName},
 
-// We understand that an unpaid internship may not be feasible for everyone, but we believe the experience gained at MNNLR will be invaluable for your future career aspirations.
+      // I hope this email finds you well. I am writing to you on behalf of MNNLR, an innovative startup company.
 
-// Thank you for considering this opportunity with MNNLR. We look forward to potentially welcoming you to our team and helping you achieve your professional goals.
-// `;
+      // We understand that an unpaid internship may not be feasible for everyone, but we believe the experience gained at MNNLR will be invaluable for your future career aspirations.
 
-//       AutoSendEmail(email, "Internship Opportunity at MNNLR", message1);
+      // Thank you for considering this opportunity with MNNLR. We look forward to potentially welcoming you to our team and helping you achieve your professional goals.
+      // `;
+
+      //       AutoSendEmail(email, "Internship Opportunity at MNNLR", message1);
     }
 
     console.log('test 17')

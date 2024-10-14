@@ -4,6 +4,7 @@ import {
   getAllEmployee,
   getEmployeeByUserId,
   getEmployeeById,
+  updateOneEmployee,
   deleteOneEmployee
 } from "../Controllers/employeeDataController.js";
 
@@ -22,25 +23,31 @@ router
 
 router
   .route("/employees")
-  .get( 
+  .get(
     isAuthenticated,
     restrictMiddleware(["admin", "hr", "employee"]),
     getAllEmployee
   );
-  router.route("/employee/:id")  
-    .get(isAuthenticated , restrictMiddleware(["admin","hr","employee"]), getEmployeeById)
-    .delete(
-      isAuthenticated,
-      restrictMiddleware(["admin","hr"]),
-      deleteOneEmployee
-    );
-  
-router.route("/employee")  
-  .get(isAuthenticated,restrictMiddleware(["employee"]), getEmployeeByUserId)
 
-router.route("/employee/byuserId")  
-  .get(isAuthenticated,restrictMiddleware(["admin","hr","employee"]), getEmployeeByUserId)
-  
+router.route("/employee/:id")
+  .get(isAuthenticated, restrictMiddleware(["admin", "hr", "employee"]), getEmployeeById)
+  .patch(
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+    updateOneEmployee
+  )
+  .delete(
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+    deleteOneEmployee
+  );
+
+router.route("/employee")
+  .get(isAuthenticated, restrictMiddleware(["employee"]), getEmployeeByUserId)
+
+router.route("/employee/byuserId")
+  .get(isAuthenticated, restrictMiddleware(["admin", "hr", "employee"]), getEmployeeByUserId)
+
 
 router
   .route("/employee/empId/:employeeId")
