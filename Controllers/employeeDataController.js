@@ -74,7 +74,7 @@ export const updateOneEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // console.log(req.body)
+    console.log(req.body)
     // console.log(id)
 
     let myCloud1 = "";
@@ -277,6 +277,7 @@ export const updateOneEmployee = async (req, res) => {
       }
 
     }
+
 
     console.log(updatedData);
 
