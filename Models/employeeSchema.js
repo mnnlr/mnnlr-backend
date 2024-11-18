@@ -150,7 +150,7 @@ const employeeSchema = new mongoose.Schema(
     },
     dateofjoining: {
       type: String,
-      required: true,
+      // required: true,
     }
   },
   { timestamps: true }
