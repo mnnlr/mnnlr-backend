@@ -527,6 +527,8 @@ export const createEmployeeDetails = async (req, res) => {
       },
     });
 
+    console.log("emp details: ", employeeDetails);
+
     //Logic for sending employeeid , Offer Letter and Generating Pdf
     if (employeeDetails._id) {
       // --------------------------------------------------------------------------------------------------->
@@ -722,8 +724,24 @@ export const createEmployeeDetails = async (req, res) => {
 
       // ------------------------------------------------------------------------------------------>
       console.log('test 14')
-      const message = `\n Your temporary Username and Password are :- ${employeeId} and ${"password"}' \n\n 
-    If you have not requested this email then, please ignore it `;
+      const message = `
+        Congratulations on joining the MNNLR team! 🎉  
+        We are thrilled to have you on board and look forward to your valuable contributions.
+
+        Here are your login credentials to get started:
+        - Employee ID: ${employeeId}  
+        - Password: password  
+
+        Please use these credentials to log in to our system and update your password at your earliest convenience.
+
+        If you did not request this email, please disregard it.
+
+        Warm regards,  
+        MNNLR Team
+      `;
+
+      console.log("mes:", message);
+
       console.log('test 15')
       await sendEmail(email, "Employee Id Generation", message);
       console.log('test 16')
