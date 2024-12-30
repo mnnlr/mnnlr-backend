@@ -9,15 +9,15 @@ import { hash } from "bcrypt";
 import { sendEmail } from "../utils/sendEmail.js";
 import user from "../Models/user_model.js";
 import { ErrorHandler } from "../utils/errorHendler.js";
-import { AutoSendEmail } from "../utils/automatedEmail.js";
+// import { AutoSendEmail } from "../utils/automatedEmail.js";
 
-import https from "https";
-import request from "request";
+// import https from "https";
+// import request from "request";
 
-import path from "path";
-import fs from "fs";
-import PDFNet from "@pdftron/pdfnet-node";
-import { fileURLToPath } from "url";
+// import path from "path";
+// import fs from "fs";
+// import PDFNet from "@pdftron/pdfnet-node";
+// import { fileURLToPath } from "url";
 import base64StringToFile from "../utils/getFileFromBase64.js";
 
 
@@ -353,8 +353,14 @@ export const createEmployeeDetails = async (req, res) => {
     console.log({ firstName, lastName, fatherName, motherName, address, phoneNo, email, description, designation, designationLevel, employeeId })
 
     if (!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId) {
-      return res.status(400).json({ success: false, message: 'All fields are required' })
+      return res.status(400).json({ success: false, message: 'Please fill all required fields.' })
     }
+
+    const employeeEmailCheck = await EmployeeSchema.findOne({ email: email });
+    if (employeeEmailCheck) return res.status(400).json({ success: false, message: 'Employee with this email already exists.' });
+
+    const employeeIdCheck = await EmployeeSchema.findOne({ employeeId: employeeId });
+    if (employeeIdCheck) return res.status(400).json({ success: false, message: 'Employee with this employeeId already exists.' });
 
     // return res.status(200).json({success:true,message:'Data Saved Successfully'});
 
