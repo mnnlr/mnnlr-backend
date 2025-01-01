@@ -74,6 +74,10 @@ export const updateOneEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
+    const employee = await EmployeeSchema.findById(id);
+
+    if (!employee) return res.status(404).json({ message: "Employee not found" });
+
     console.log(req.body)
     // console.log(id)
 
@@ -735,8 +739,8 @@ export const createEmployeeDetails = async (req, res) => {
         We are thrilled to have you on board and look forward to your valuable contributions.
 
         Here are your login credentials to get started:
-        - Employee ID: ${employeeId}  
-        - Password: password  
+        - Employee ID: ${employeeId}
+        - Password: password
 
         Please use these credentials to log in to our system and update your password at your earliest convenience.
 
