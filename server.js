@@ -38,7 +38,7 @@ import { autoUpdateLeave } from "./utils/autoUpdateLeave.js";
 //     autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
 // });
 cron.schedule('0 0 * * *', () => {
-    autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
+  autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
 });
 
 app.use(bodyParser.json());
@@ -91,7 +91,9 @@ import teamRouter from "./Router/TeamRoute.js";
 
 import PasswordRecoveryRoute from './Router/passwordRecoveryRoute.js'
 
+// router for updating user data 
 app.use(userRouter);
+
 app.use(RefreshTokenRoute);
 app.use(webDesignRouter);
 
@@ -139,7 +141,7 @@ app.post("/replace-text", async (req, res) => {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     // Iterate over each page and draw the replacements
-    const pages = pdfDoc.getPages();cl
+    const pages = pdfDoc.getPages(); cl
     for (const page of pages) {
       const { width, height } = page.getSize();
       const content = page.getTextContent();

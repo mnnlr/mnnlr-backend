@@ -11,6 +11,7 @@ import bcrypt from 'bcrypt'
 // import { Sign } from "crypto";
 
 import jwt from "jsonwebtoken";
+// import { updateUser } from "../../mnnlr-client/src/redux/slices/LoginSlice.js";
 
 export const getAllUser = async (req, res) => {
   try {
@@ -174,7 +175,6 @@ export const LogOut = async (req, res, next) => {
     const performance = await Performance.findOne({
       user_id: foundUser.id,
       date: today,
-
     });
     console.log('login performance : ', performance)
     if (performance) {
@@ -185,16 +185,12 @@ export const LogOut = async (req, res, next) => {
       if (!timeEntry.timeOut) {
 
         timeEntry.timeOut = currentTime;
-        performance.isActive = false;
 
       }
 
       await performance.save();
 
     }
-    console.log('performance : ', performance);
-
-
     res.clearCookie("Token", {
       httpOnly: true,
       sameSite: 'None',

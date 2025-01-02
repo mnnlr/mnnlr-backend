@@ -9,15 +9,15 @@ import { hash } from "bcrypt";
 import { sendEmail } from "../utils/sendEmail.js";
 import user from "../Models/user_model.js";
 import { ErrorHandler } from "../utils/errorHendler.js";
-import { AutoSendEmail } from "../utils/automatedEmail.js";
+// import { AutoSendEmail } from "../utils/automatedEmail.js";
 
-import https from "https";
-import request from "request";
+// import https from "https";
+// import request from "request";
 
-import path from "path";
-import fs from "fs";
-import PDFNet from "@pdftron/pdfnet-node";
-import { fileURLToPath } from "url";
+// import path from "path";
+// import fs from "fs";
+// import PDFNet from "@pdftron/pdfnet-node";
+// import { fileURLToPath } from "url";
 import base64StringToFile from "../utils/getFileFromBase64.js";
 
 
@@ -73,6 +73,10 @@ export const getEmployeeByUserId = async (req, res, next) => {
 export const updateOneEmployee = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const employee = await EmployeeSchema.findById(id);
+
+    if (!employee) return res.status(404).json({ message: "Employee not found" });
 
     console.log(req.body)
     // console.log(id)
@@ -353,8 +357,14 @@ export const createEmployeeDetails = async (req, res) => {
     console.log({ firstName, lastName, fatherName, motherName, address, phoneNo, email, description, designation, designationLevel, employeeId })
 
     if (!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId) {
-      return res.status(400).json({ success: false, message: 'All fields are required' })
+      return res.status(400).json({ success: false, message: 'Please fill all required fields.' })
     }
+
+    const employeeEmailCheck = await EmployeeSchema.findOne({ email: email });
+    if (employeeEmailCheck) return res.status(400).json({ success: false, message: 'Employee with this email already exists.' });
+
+    const employeeIdCheck = await EmployeeSchema.findOne({ employeeId: employeeId });
+    if (employeeIdCheck) return res.status(400).json({ success: false, message: 'Employee with this employeeId already exists.' });
 
     // return res.status(200).json({success:true,message:'Data Saved Successfully'});
 
@@ -526,6 +536,8 @@ export const createEmployeeDetails = async (req, res) => {
         url: myCloud8.secure_url,
       },
     });
+
+    console.log("emp details: ", employeeDetails);
 
     //Logic for sending employeeid , Offer Letter and Generating Pdf
     if (employeeDetails._id) {
@@ -722,8 +734,24 @@ export const createEmployeeDetails = async (req, res) => {
 
       // ------------------------------------------------------------------------------------------>
       console.log('test 14')
-      const message = `\n Your temporary Username and Password are :- ${employeeId} and ${"password"}' \n\n 
-    If you have not requested this email then, please ignore it `;
+      const message = `
+        Congratulations on joining the MNNLR team! 🎉  
+        We are thrilled to have you on board and look forward to your valuable contributions.
+
+        Here are your login credentials to get started:
+        - Employee ID: ${employeeId}
+        - Password: password
+
+        Please use these credentials to log in to our system and update your password at your earliest convenience.
+
+        If you did not request this email, please disregard it.
+
+        Warm regards,  
+        MNNLR Team
+      `;
+
+      console.log("mes:", message);
+
       console.log('test 15')
       await sendEmail(email, "Employee Id Generation", message);
       console.log('test 16')
