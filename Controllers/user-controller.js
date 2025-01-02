@@ -185,6 +185,7 @@ export const LogOut = async (req, res, next) => {
       if (!timeEntry.timeOut) {
 
         timeEntry.timeOut = currentTime;
+           performance.isActive = false;
 
       }
 
