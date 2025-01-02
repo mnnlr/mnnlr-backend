@@ -146,13 +146,20 @@ const employeeSchema = new mongoose.Schema(
     shift: {
       type: String,
       required: true,
-      default:'morning'
+      default: 'morning',
+      enum: ["morning", "afternoon", "evening", "night"],
     },
     dateofjoining: {
-      type: String,   
+      type: String,
       // default: () => new Date().toISOString().split('T')[0],
-     // required: true,
+      // required: true,
     },
+    AssignShiftsToHR: {
+      type: [String]
+    },
+    AssignShiftsToManager: {
+      type: [String]
+    }
   },
   { timestamps: true }
 );

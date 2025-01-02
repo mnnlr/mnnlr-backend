@@ -1,8 +1,9 @@
+import e from "express";
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
-    email:{
+    email: {
       type: String,
     },
     username: {
@@ -17,6 +18,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       default: "user",
+      enum: ["user", "admin", "hr", "manager", "employee"],
     },
     refreshToken: {
       type: String,
