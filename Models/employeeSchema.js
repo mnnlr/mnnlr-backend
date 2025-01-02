@@ -149,9 +149,10 @@ const employeeSchema = new mongoose.Schema(
       default:'morning'
     },
     dateofjoining: {
-      type: String,
-      // required: true,
-    }
+      type: String,   
+      // default: () => new Date().toISOString().split('T')[0],
+     // required: true,
+    },
   },
   { timestamps: true }
 );

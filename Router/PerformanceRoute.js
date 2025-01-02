@@ -7,6 +7,7 @@ import {
   gerPerformanceByWorkingHour,
   AllEmployeeAttandance,
   EmployeeAttandanceById,
+  getAttendanceByUserId,
 } from "../Controllers/PerformanceController.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
@@ -33,8 +34,13 @@ router
   );
 router.route("/attendance/:id").get(
   isAuthenticated,
-  restrictMiddleware(["admin", "hr", "employee"]),
+  restrictMiddleware(["admin", "hr"]),
   EmployeeAttandanceById
 );
+
+router.route("/attendance/detail/:userId").get(
+  isAuthenticated,
+  restrictMiddleware(["admin", "hr"]),
+  getAttendanceByUserId)
 
 export default router;
