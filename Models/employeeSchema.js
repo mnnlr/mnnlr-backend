@@ -159,7 +159,16 @@ const employeeSchema = new mongoose.Schema(
     },
     AssignShiftsToManager: {
       type: [String]
-    }
+    },
+    employeeTeam: {
+      type: String,
+    },
+    AssignedTeamsToHR: {
+      type: [String]
+    },
+    AssignedTeamsToManager: {
+      type: [String]
+    },
   },
   { timestamps: true }
 );

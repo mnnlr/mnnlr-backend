@@ -25,7 +25,7 @@ router
   .route("/employees")
   .get(
     isAuthenticated,
-    restrictMiddleware(["admin", "hr", "employee"]),
+    restrictMiddleware(["admin", "hr", "employee", "manager"]),
     getAllEmployee
   );
 
