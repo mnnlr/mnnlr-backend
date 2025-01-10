@@ -5,10 +5,10 @@ import moment from "moment";
 import calculateTotalWorkingHours from "../utils/calculateWorkinHours.js";
 import { ErrorHandler } from "../utils/errorHendler.js";
 import user from "../Models/user_model.js";
+import User from "../Models/user_model.js";
 
 const getAllPerformance = async (req, res, next) => {
   try {
-
     const { period = 'week' } = req.query;
     
     const now = new Date();
@@ -47,9 +47,6 @@ const getAllPerformance = async (req, res, next) => {
         throw new Error("Invalid period specified.");
     }
     
-    // startDate = startDate.toISOString();
-    // endDate = endDate.toISOString();
-    
     const result = await Employee.aggregate([
       {
         $addFields: {
@@ -65,6 +62,22 @@ const getAllPerformance = async (req, res, next) => {
         }
       },
       {
+        $lookup: {
+          from: "users",  // lookup to fetch role from user collection
+          localField: "userId",  // matching the userId in the employee collection
+          foreignField: "_id",  // matching the _id of user in the users collection
+          as: "userInfo"
+        }
+      },
+      {
+        $unwind: "$userInfo"  // Unwind the array to get the role directly from the userInfo object
+      },
+      {
+        $match: {
+          "userInfo.role": "employee"  // Only get users with role 'hr'
+        }
+      },
+      {
         $project: {
           _id: 1,
           firstName: 1,
@@ -75,7 +88,8 @@ const getAllPerformance = async (req, res, next) => {
           employeeId: 1,
           designationLevel: 1,
           designation: 1,
-          employeedOn:{
+          role: "$userInfo.role",  // Include the role from userInfo
+          employeedOn: {
             $dateToString: {
               format: "%Y-%m-%d",
               date: "$createdAt"
@@ -146,7 +160,6 @@ const getAllPerformance = async (req, res, next) => {
                           else: 0
                         }
                       }
-                      
                     }
                   }
                 },
@@ -271,30 +284,327 @@ const getAllPerformance = async (req, res, next) => {
       },
     ]);
     
-   
-    res.status(200).json({ success: true,  message: "success", Data: result[0] });
+    res.status(200).json({ success: true, message: "success", Data: result[0] });
     
   } catch (error) {
     next(error);
   }
 };
 
+const getHRAllPerformance = async (req, res, next) => {
+  try {
+    const { period = 'week' } = req.query;
+    
+    const now = new Date();
+    let startDate;
+    let endDate = new Date();
+    
+    switch (period) {
+      case "today":
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        endDate = new Date(now.setHours(23, 59, 59, 999));
+        break;
+      case "yesterday":
+        startDate = new Date(now.setDate(now.getDate() - 1));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "week":
+        startDate = new Date(now.setDate(now.getDate() - now.getDay()));
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "month":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case "year":
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        throw new Error("Invalid period specified.");
+    }
+    
+    const result = await Employee.aggregate([
+      {
+        $addFields: {
+          userId: { "$toObjectId": "$userId" }
+        }
+      },
+      {
+        $lookup: {
+          from: "performances",
+          localField: "userId",
+          foreignField: "user_id",
+          as: "employeeDetails",
+        }
+      },
+      {
+        $lookup: {
+          from: "users",  // lookup to fetch role from user collection
+          localField: "userId",  // matching the userId in the employee collection
+          foreignField: "_id",  // matching the _id of user in the users collection
+          as: "userInfo"
+        }
+      },
+      {
+        $unwind: "$userInfo"  
+      },
+      {
+        $match: {
+          "userInfo.role": "hr" 
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          firstName: 1,
+          lastName: 1,
+          avatar: 1,
+          email: 1,
+          userId: 1,
+          employeeId: 1,
+          designationLevel: 1,
+          designation: 1,
+          role: "$userInfo.role",  // Include the role from userInfo
+          employeedOn: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt"
+            }
+          },
+          attendance: {
+            $map: {
+              input: "$employeeDetails",
+              as: "detail",
+              in: {
+                _id: "$$detail._id",
+                user_id: "$$detail.user_id",
+                date: "$$detail.date",
+                timeTracking: {
+                  $map: {
+                    input: "$$detail.timeTracking",
+                    as: "time",
+                    in: {
+                      timeIn: "$$time.timeIn",
+                      timeOut: {
+                        $ifNull: [
+                          "$$time.timeOut",
+                          {
+                            $dateToString: {
+                              format: "%H:%M:%S",
+                              date: { $dateAdd: { startDate: "$$detail.date", unit: "second", amount: 1 } }
+                            } 
+                          }
+                        ]
+                      },
+                      duration: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                },
+                totalDuration: {
+                  $sum: {
+                    $map: {
+                      input: "$$detail.timeTracking",
+                      as: "time",
+                      in: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          totalWorkingTime: {
+            $sum: {
+              $map: {
+                input: "$employeeDetails",
+                as: "detail",
+                in: {
+                  $sum: {
+                    $map: {
+                      input: "$$detail.timeTracking",
+                      as: "time",
+                      in: {
+                        $cond: {
+                          if: {
+                            $and: [
+                              { $ne: ["$$time.timeOut", null] },
+                              { $ne: ["$$time.timeIn", null] }
+                            ]
+                          },
+                          then: {
+                            $divide: [
+                              {
+                                $subtract: [
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeOut", ":"] }, 2] } }
+                                    }
+                                  },
+                                  {
+                                    $dateFromParts: {
+                                      year: { $year: "$$detail.date" },
+                                      month: { $month: "$$detail.date" },
+                                      day: { $dayOfMonth: "$$detail.date" },
+                                      hour: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 0] } },
+                                      minute: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 1] } },
+                                      second: { $toInt: { $arrayElemAt: [{ $split: ["$$time.timeIn", ":"] }, 2] } }
+                                    }
+                                  }
+                                ]
+                              },
+                              1000 // Convert milliseconds to seconds
+                            ]
+                          },
+                          else: 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+        }
+      },
+      {
+        $sort: { totalWorkingTime: -1 }
+      },
+      {
+        $group: {
+          _id: null,
+          employeePerformances: { $push: "$$ROOT" },
+          totalWorkingTimeOfAllEmployee: { $sum: "$totalWorkingTime" }
+        }
+      },
+    ]);
+    
+    res.status(200).json({ success: true, message: "success", Data: result[0] });
+    
+  } catch (error) {
+    next(error);
+  }
+}; 
+
 const AllEmployeeAttandance = async (req, res, next) => {
   try {
     const { date } = req.query;
 
     // Format the date to YYYY-MM-DD
-    const attandanceDate = date
+    const attendanceDate = date
       ? new Date(date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
-    // Fetch all employees and performances for the given date
-    const employees = await Employee.find({});
-    const performances = await Performance.find({ date: attandanceDate });
+    const users = await User.find({ role: 'employee' });
 
-    // Map over each employee to calculate their attendance
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'No employees found' });
+    }
+
+    const employeeIds = users.map((user) => user._id);
+    console.log("employeeIds: ", employeeIds);
+    
+
+    const employees = await Employee.find({ userId: { $in: employeeIds } });
+// console.log("employees: ", employees);
+
+    if (employees.length === 0) {
+      return res.status(404).json({ success: false, message: 'No employee data found' });
+    }
+
+    const performances = await Performance.find({ date: attendanceDate });
+
     const employeeAttendance = await Promise.all(
-      employees?.map(async (employee) => {
+      employees.map(async (employee) => {
         const {
           _id,
           firstName,
@@ -307,12 +617,10 @@ const AllEmployeeAttandance = async (req, res, next) => {
           userId,
         } = employee;
 
-        // Find the performance data for the employee on the given date
         const employeePerformance = performances.find(
-          ({ user_id }) => userId === user_id.toString()
+          (performance) => performance.user_id.toString() === userId.toString()
         );
 
-        // If no performance data is found for the employee, return the basic employee info
         if (!employeePerformance) {
           return {
             _id,
@@ -324,16 +632,12 @@ const AllEmployeeAttandance = async (req, res, next) => {
             employeeId,
             designationLevel,
             designation,
-            isActive: false, // If no performance data, we assume the employee is not active
+            isActive: false, 
           };
         }
 
-        // Calculate total working hours for the employee if performance data exists
-        const { calculatedAttendance } = await new Promise((resolve, reject) => {
-          resolve(calculateTotalWorkingHours(employeePerformance));
-        });
+        const { calculatedAttendance } = await calculateTotalWorkingHours(employeePerformance);
 
-        // Return the employee's details along with their calculated attendance and active status
         return {
           _id,
           firstName,
@@ -345,46 +649,122 @@ const AllEmployeeAttandance = async (req, res, next) => {
           designationLevel,
           designation,
           attendance: calculatedAttendance,
-          isActive: employeePerformance.isActive, // Correct field: isActive from Performance model
+          isActive: employeePerformance.isActive, 
         };
       })
     );
 
-    // Send response with employee attendance data
     res.status(200).json({ success: true, Data: employeeAttendance });
   } catch (error) {
     next(error);
   }
 };
 
+const getAllHrAttandance = async (req, res, next) => {
+  try {
+    const { date } = req.query;
+
+    const attendanceDate = date
+      ? new Date(date).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+
+    const users = await User.find({ role: 'hr' });
+
+    if (users.length === 0) {
+      return res.status(404).json({ success: false, message: 'No HR found' });
+    }
+    const employeeIds = users.map((user) => user._id);
+    // console.log("employeeIds: ", employeeIds);
+    
+
+    const employees = await Employee.find({ userId: { $in: employeeIds } });
+// console.log("employees: ", employees);
+
+    if (employees.length === 0) {
+      return res.status(404).json({ success: false, message: 'No employee data found' });
+    }
+
+    const performances = await Performance.find({ date: attendanceDate });
+
+    const employeeAttendance = await Promise.all(
+      employees.map(async (employee) => {
+        const {
+          _id,
+          firstName,
+          avatar,
+          email,
+          designation,
+          designationLevel,
+          employeeId,
+          lastName,
+          userId,
+        } = employee;
+
+        const employeePerformance = performances.find(
+          (performance) => performance.user_id.toString() === userId.toString()
+        );
+
+        if (!employeePerformance) {
+          return {
+            _id,
+            firstName,
+            lastName,
+            avatar,
+            email,
+            userId,
+            employeeId,
+            designationLevel,
+            designation,
+            isActive: false, 
+          };
+        }
+
+        const { calculatedAttendance } = await calculateTotalWorkingHours(employeePerformance);
+
+        return {
+          _id,
+          firstName,
+          lastName,
+          avatar,
+          userId,
+          email,
+          employeeId,
+          designationLevel,
+          designation,
+          attendance: calculatedAttendance,
+          isActive: employeePerformance.isActive, 
+        };
+      })
+    );
+
+    res.status(200).json({ success: true, Data: employeeAttendance });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const EmployeeAttandanceById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { date } = req.query;
 
-    // Validate that the 'id' is provided
     if (!id) {
       return res.status(404).json({ success: false, message: "Data not found" });
     }
 
-    // Determine the date to use (either query param or today's date)
     const today = date
       ? new Date(date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
-    // Fetch employee data
     const employee = await Employee.findOne({ userId: id });
     if (!employee) {
       return res.status(404).json({ success: false, message: "Employee not found" });
     }
 
-    // Fetch the most recent attendance record (for today or the latest available)
     const attendance = await Performance.findOne({
       user_id: id,
-    }).sort({ date: -1 }); // Sort in descending order to get the latest attendance
+    }).sort({ date: -1 }); 
 
-    // Extract employee details
     const {
       _id: employeeDocId,
       firstName,
@@ -397,33 +777,28 @@ const EmployeeAttandanceById = async (req, res, next) => {
       lastName,
     } = employee;
 
-    // Initialize variables for the latest time-in and duration
     let latestTimeIn = null;
     let latestTimeOut = null;
     let duration = null;
 
-    // If there's attendance data, calculate the time-in, time-out, and duration
     if (attendance && attendance.timeIn) {
-      latestTimeIn = attendance.timeIn; // Store the latest time-in
-      latestTimeOut = attendance.timeOut; // Store the latest time-out
+      latestTimeIn = attendance.timeIn; 
+      latestTimeOut = attendance.timeOut;
 
-      // Calculate the duration if time-out exists
       if (latestTimeOut) {
         const timeInDate = new Date(`1970-01-01T${latestTimeIn}Z`); // Parse timeIn
         const timeOutDate = new Date(`1970-01-01T${latestTimeOut}Z`); // Parse timeOut
         const diffInMillis = timeOutDate - timeInDate; // Calculate difference in milliseconds
 
         // Convert milliseconds to hours
-        duration = (diffInMillis / (1000 * 60 * 60)).toFixed(2); // Duration in hours with 2 decimal points
+        duration = (diffInMillis / (1000 * 60 * 60)).toFixed(2); 
       }
     }
 
-    // If there's no attendance, calculatedAttendance remains null
     const { calculatedAttendance } = attendance
       ? await calculateTotalWorkingHours(attendance)
       : { calculatedAttendance: null };
 
-    // Prepare the response data, including the calculated attendance, latest time-in, time-out, and duration
     return res.status(200).json({
       success: true,
       Data: {
@@ -680,4 +1055,6 @@ export {
   AllEmployeeAttandance,
   EmployeeAttandanceById,
   getAttendanceByUserId,
+  getHRAllPerformance,
+  getAllHrAttandance
 };
