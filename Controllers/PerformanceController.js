@@ -10,11 +10,11 @@ import User from "../Models/user_model.js";
 const getAllPerformance = async (req, res, next) => {
   try {
     const { period = 'week' } = req.query;
-
+    
     const now = new Date();
     let startDate;
     let endDate = new Date();
-
+    
     switch (period) {
       case "today":
         startDate = new Date(now.setHours(0, 0, 0, 0));
@@ -46,7 +46,7 @@ const getAllPerformance = async (req, res, next) => {
       default:
         throw new Error("Invalid period specified.");
     }
-
+    
     const result = await Employee.aggregate([
       {
         $addFields: {
@@ -116,7 +116,7 @@ const getAllPerformance = async (req, res, next) => {
                             $dateToString: {
                               format: "%H:%M:%S",
                               date: { $dateAdd: { startDate: "$$detail.date", unit: "second", amount: 1 } }
-                            }
+                            } 
                           }
                         ]
                       },
@@ -283,9 +283,9 @@ const getAllPerformance = async (req, res, next) => {
         }
       },
     ]);
-
+    
     res.status(200).json({ success: true, message: "success", Data: result[0] });
-
+    
   } catch (error) {
     next(error);
   }
@@ -294,11 +294,11 @@ const getAllPerformance = async (req, res, next) => {
 const getHRAllPerformance = async (req, res, next) => {
   try {
     const { period = 'week' } = req.query;
-
+    
     const now = new Date();
     let startDate;
     let endDate = new Date();
-
+    
     switch (period) {
       case "today":
         startDate = new Date(now.setHours(0, 0, 0, 0));
@@ -330,7 +330,7 @@ const getHRAllPerformance = async (req, res, next) => {
       default:
         throw new Error("Invalid period specified.");
     }
-
+    
     const result = await Employee.aggregate([
       {
         $addFields: {
@@ -354,11 +354,11 @@ const getHRAllPerformance = async (req, res, next) => {
         }
       },
       {
-        $unwind: "$userInfo"
+        $unwind: "$userInfo"  
       },
       {
         $match: {
-          "userInfo.role": "hr"
+          "userInfo.role": "hr" 
         }
       },
       {
@@ -400,7 +400,7 @@ const getHRAllPerformance = async (req, res, next) => {
                             $dateToString: {
                               format: "%H:%M:%S",
                               date: { $dateAdd: { startDate: "$$detail.date", unit: "second", amount: 1 } }
-                            }
+                            } 
                           }
                         ]
                       },
@@ -567,13 +567,13 @@ const getHRAllPerformance = async (req, res, next) => {
         }
       },
     ]);
-
+    
     res.status(200).json({ success: true, message: "success", Data: result[0] });
-
+    
   } catch (error) {
     next(error);
   }
-};
+}; 
 
 const AllEmployeeAttandance = async (req, res, next) => {
   try {
@@ -592,10 +592,10 @@ const AllEmployeeAttandance = async (req, res, next) => {
 
     const employeeIds = users.map((user) => user._id);
     console.log("employeeIds: ", employeeIds);
-
+    
 
     const employees = await Employee.find({ userId: { $in: employeeIds } });
-    // console.log("employees: ", employees);
+// console.log("employees: ", employees);
 
     if (employees.length === 0) {
       return res.status(404).json({ success: false, message: 'No employee data found' });
@@ -632,7 +632,7 @@ const AllEmployeeAttandance = async (req, res, next) => {
             employeeId,
             designationLevel,
             designation,
-            isActive: false,
+            isActive: false, 
           };
         }
 
@@ -649,7 +649,7 @@ const AllEmployeeAttandance = async (req, res, next) => {
           designationLevel,
           designation,
           attendance: calculatedAttendance,
-          isActive: employeePerformance.isActive,
+          isActive: employeePerformance.isActive, 
         };
       })
     );
@@ -675,10 +675,10 @@ const getAllHrAttandance = async (req, res, next) => {
     }
     const employeeIds = users.map((user) => user._id);
     // console.log("employeeIds: ", employeeIds);
-
+    
 
     const employees = await Employee.find({ userId: { $in: employeeIds } });
-    // console.log("employees: ", employees);
+// console.log("employees: ", employees);
 
     if (employees.length === 0) {
       return res.status(404).json({ success: false, message: 'No employee data found' });
@@ -715,7 +715,7 @@ const getAllHrAttandance = async (req, res, next) => {
             employeeId,
             designationLevel,
             designation,
-            isActive: false,
+            isActive: false, 
           };
         }
 
@@ -732,7 +732,7 @@ const getAllHrAttandance = async (req, res, next) => {
           designationLevel,
           designation,
           attendance: calculatedAttendance,
-          isActive: employeePerformance.isActive,
+          isActive: employeePerformance.isActive, 
         };
       })
     );
@@ -763,7 +763,7 @@ const EmployeeAttandanceById = async (req, res, next) => {
 
     const attendance = await Performance.findOne({
       user_id: id,
-    }).sort({ date: -1 });
+    }).sort({ date: -1 }); 
 
     const {
       _id: employeeDocId,
@@ -782,7 +782,7 @@ const EmployeeAttandanceById = async (req, res, next) => {
     let duration = null;
 
     if (attendance && attendance.timeIn) {
-      latestTimeIn = attendance.timeIn;
+      latestTimeIn = attendance.timeIn; 
       latestTimeOut = attendance.timeOut;
 
       if (latestTimeOut) {
@@ -791,7 +791,7 @@ const EmployeeAttandanceById = async (req, res, next) => {
         const diffInMillis = timeOutDate - timeInDate; // Calculate difference in milliseconds
 
         // Convert milliseconds to hours
-        duration = (diffInMillis / (1000 * 60 * 60)).toFixed(2);
+        duration = (diffInMillis / (1000 * 60 * 60)).toFixed(2); 
       }
     }
 
@@ -865,7 +865,7 @@ const gerPerformanceByWorkingHour = async (req, res, next) => {
 const getAttendanceByUserId = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const { period } = req.query;
+    const { period } = req.query; 
 
     if (!userId) {
       return res.status(400).json({
@@ -895,9 +895,9 @@ const getAttendanceByUserId = async (req, res, next) => {
 
     // Convert time format to minutes
     const convertToMinutes = (timeStr) => {
-      if (!timeStr) return 0;
+      if (!timeStr) return 0; 
       const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-      return (hours * 60) + minutes + (seconds / 60);
+      return (hours * 60) + minutes + (seconds / 60); 
     };
 
     const employee = await Employee.findOne({ userId: userId });
@@ -956,7 +956,7 @@ const getAttendanceByUserId = async (req, res, next) => {
 
     const groupByWeek = (data) => {
       return data.reduce((groups, performance) => {
-        const weekNumber = getWeekNumber(new Date(performance.date));
+        const weekNumber = getWeekNumber(new Date(performance.date)); 
         if (!groups[weekNumber]) {
           groups[weekNumber] = { week: `Week ${weekNumber}`, totalDuration: 0 };
         }
@@ -1027,7 +1027,7 @@ const getAttendanceByUserId = async (req, res, next) => {
 
     const result = Object.values(groupedData).map(group => ({
       period: group.day || group.week || group.period || group.year,
-      totalWorkingHours: (group.totalDuration / 60).toFixed(2)
+      totalWorkingHours: (group.totalDuration / 60).toFixed(2) 
     }));
 
     res.status(200).json({
@@ -1044,7 +1044,7 @@ const getAttendanceByUserId = async (req, res, next) => {
 const getWeekNumber = (date) => {
   const startDate = new Date(date.getFullYear(), 0, 1);
   const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
-  return Math.ceil((days + 1) / 7);
+  return Math.ceil((days + 1) / 7); 
 };
 
 
