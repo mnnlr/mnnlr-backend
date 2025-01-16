@@ -60,19 +60,21 @@ export const userLogin = async (req, res, next) => {
   try {
 
     const { username, password } = req.body;
+    console.log("username: ", username)
 
     if (!username) return next(new ErrorHandler(400, 'username required'))
     if (!password) return next(new ErrorHandler(400, 'password required'))
 
     const foundUser = await user_model.findOne({ username: username }).select('+password')
+    // console.log("test here")
 
     if (!foundUser) return next(new ErrorHandler(404, 'Invalid username or password'));
-
+    // console.log("test-user")
     const isPasswordValid = await bcrypt.compare(password, foundUser?.password);
 
     if (!isPasswordValid) return next(new ErrorHandler(404, 'Invalid username or password'));
 
-
+    // console.log("test-pass")
     const today = new Date().toISOString().split('T')[0];
     const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
 
@@ -118,6 +120,8 @@ export const userLogin = async (req, res, next) => {
 
     await user_model.findOneAndUpdate({ username: username }, { refreshToken: RefreshToken }, { new: true })
 
+    console.log("refresh token: ", RefreshToken, "accessToken: ", AccessToken)
+
     res.cookie('Token', RefreshToken, cookieOptions);
 
     res.status(200).json({ success: true, foundUser: { ...rest, accessToken: AccessToken } })
@@ -141,7 +145,7 @@ export const userUpdate = async (req, res) => {
     console.log("error while updating user: ", err);
     return res.status(500).json({ message: err.message, success: false });
   }
-} 
+}
 
 export const LogOut = async (req, res, next) => {
   try {
@@ -185,7 +189,7 @@ export const LogOut = async (req, res, next) => {
       if (!timeEntry.timeOut) {
 
         timeEntry.timeOut = currentTime;
-           performance.isActive = false;
+        performance.isActive = false;
 
       }
 

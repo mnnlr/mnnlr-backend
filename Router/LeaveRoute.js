@@ -2,6 +2,7 @@ import { Router } from "express";
 const router = Router();
 
 import {
+  getAllLeaves,
   getAllLeaveRequest,
   leaveRequest,
   getLeaveRequestById,
@@ -10,10 +11,11 @@ import {
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
+router.route("/").get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaves);
 router
-  .route("/")
+  .route("/leave-request")
   .get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaveRequest)
-  .post(isAuthenticated,restrictMiddleware(["admin", "hr","employee"]), leaveRequest);
+  .post(isAuthenticated, restrictMiddleware(["admin", "hr", "employee"]), leaveRequest);
 router
   .route("/:id")
   .get(isAuthenticated, getLeaveRequestById)
