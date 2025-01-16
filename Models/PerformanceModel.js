@@ -31,9 +31,6 @@ const performanceSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-  },
-  {
-    timestamps: true, 
   }
 );
 

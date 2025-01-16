@@ -140,7 +140,7 @@ const employeeSchema = new mongoose.Schema(
       },
     },
     userId: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       ref: "user",
     },
     shift: {
