@@ -73,8 +73,8 @@ const getAllPerformance = async (req, res, next) => {
         $unwind: "$userInfo"  // Unwind the array to get the role directly from the userInfo object
       },
       {
-        $match: {
-          "userInfo.role": "employee"  // Only get users with role 'hr'
+      $match: {
+          "userInfo.role": { $in: ["employee", "hr"] }  
         }
       },
       {
