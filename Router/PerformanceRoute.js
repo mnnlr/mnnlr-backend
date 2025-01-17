@@ -10,6 +10,7 @@ import {
   getAttendanceByUserId,
   getHRAllPerformance,
   getAllHrAttandance,
+  getWorkingHoursForWeekMonthTotal,
 } from "../Controllers/PerformanceController.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
@@ -31,7 +32,7 @@ router
   .route("/attendance")
   .get(
     isAuthenticated,
-    restrictMiddleware(["admin", "hr"]),
+    restrictMiddleware(["admin", ,"hr"]),
     AllEmployeeAttandance
   );
 router.route("/attendance/:id").get(
@@ -54,6 +55,12 @@ router.route("/Hr/attendance").get(
   getAllHrAttandance,
   isAuthenticated,
   restrictMiddleware(["admin", "hr"]),
+)
+
+router.route("/workingHours/:userId").get(
+  isAuthenticated,
+  restrictMiddleware(["employee"]),
+  getWorkingHoursForWeekMonthTotal
 )
 
 export default router;
