@@ -35,15 +35,23 @@ export const getEmployeeById = async (req, res, next) => {
     const { id, employeeId } = req.params;
 
     let query = {};
+
+    // Initial query using _id or employeeId
     if (id) {
-      query = { _id: id };
+      query._id = id;
+    } else if (employeeId) {
+      query.employeeId = employeeId;
     }
 
-    if (employeeId) {
-      query = { employeeId: employeeId };
+    let employee = await EmployeeSchema.findOne(query);
+
+    // Fallback query using userId if no employee is found and id exists
+    if (!employee && id) {
+      query = { userId: id }; // New query for fallback
+      employee = await EmployeeSchema.findOne(query);
     }
 
-    const employee = await EmployeeSchema.findOne(query);
+    // If still no employee found, return 404
     if (!employee) {
       return next(new ErrorHandler(404, "Employee not found"));
     }
@@ -53,6 +61,7 @@ export const getEmployeeById = async (req, res, next) => {
     next(new ErrorHandler(500, error.message));
   }
 };
+
 
 export const getEmployeeByUserId = async (req, res, next) => {
   try {
