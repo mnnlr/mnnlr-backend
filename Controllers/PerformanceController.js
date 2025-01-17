@@ -73,8 +73,8 @@ const getAllPerformance = async (req, res, next) => {
         $unwind: "$userInfo"  // Unwind the array to get the role directly from the userInfo object
       },
       {
-      $match: {
-          "userInfo.role": { $in: ["employee", "hr"] }  
+        $match: {
+          "userInfo.role": { $in: ["employee", "hr"] }  // Match both 'employee' and 'hr'
         }
       },
       {
@@ -358,7 +358,7 @@ const getHRAllPerformance = async (req, res, next) => {
       },
       {
         $match: {
-          "userInfo.role": "hr" 
+          "userInfo.role": "employee" 
         }
       },
       {
@@ -584,7 +584,7 @@ const AllEmployeeAttandance = async (req, res, next) => {
       ? new Date(date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
-    const users = await User.find({ role: 'employee' });
+      const users = await User.find({ role: { $in: ['employee', 'hr'] } });
 
     if (users.length === 0) {
       return res.status(404).json({ success: false, message: 'No employees found' });
@@ -668,7 +668,7 @@ const getAllHrAttandance = async (req, res, next) => {
       ? new Date(date).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
-    const users = await User.find({ role: 'hr' });
+    const users = await User.find({ role: 'employee' });
 
     if (users.length === 0) {
       return res.status(404).json({ success: false, message: 'No HR found' });
