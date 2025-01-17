@@ -1047,6 +1047,92 @@ const getWeekNumber = (date) => {
   return Math.ceil((days + 1) / 7); 
 };
 
+const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "UserId is required."
+      });
+    }
+
+    const performanceData = await Performance.find({ user_id: userId }).select("timeTracking date user_id");
+// console.log("performanceData: ", performanceData);
+
+    if (!performanceData || performanceData.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No performance data found for this user."
+      });
+    }
+
+    const convertToSeconds = (timeStr) => {
+      if (!timeStr) return 0;
+      const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+      return (hours * 3600) + (minutes * 60) + (seconds); 
+    };
+
+    const currentDate = new Date();
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); 
+
+    const startOfToday = new Date(currentDate);
+    startOfToday.setHours(0, 0, 0, 0); 
+
+    startOfWeek.setHours(0, 0, 0, 0); 
+    currentDate.setHours(23, 59, 59, 999); 
+
+    const groupByPeriod = (data, startDate, endDate) => {
+      return data.reduce((groups, performance) => {
+        const performanceDate = new Date(performance.date);
+        performanceDate.setHours(0, 0, 0, 0); 
+        
+        if (performanceDate >= startDate && performanceDate <= endDate) {
+          performance.timeTracking.forEach((time) => {
+            const timeIn = time.timeIn && typeof time.timeIn === 'string' ? convertToSeconds(time.timeIn) : 0;
+            const timeOut = time.timeOut && typeof time.timeOut === 'string' ? convertToSeconds(time.timeOut) : 0;
+            const duration = timeOut - timeIn;
+            if (duration > 0) {
+              if (!groups.totalDuration) groups.totalDuration = 0;
+              groups.totalDuration += duration;
+            }
+          });
+        }
+        return groups;
+      }, { totalDuration: 0 });
+    };
+
+    const todayData = groupByPeriod(performanceData, startOfToday, currentDate);
+    const weeklyData = groupByPeriod(performanceData, startOfWeek, currentDate);
+    const monthlyData = groupByPeriod(performanceData, new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), currentDate);
+    const totalWorkingHours = performanceData.reduce((total, performance) => {
+      performance.timeTracking.forEach((time) => {
+        const timeIn = time.timeIn && typeof time.timeIn === 'string' ? convertToSeconds(time.timeIn) : 0;
+        const timeOut = time.timeOut && typeof time.timeOut === 'string' ? convertToSeconds(time.timeOut) : 0;
+        const duration = timeOut - timeIn;
+        if (duration > 0) total += duration;
+      });
+      return total;
+    }, 0);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        today: todayData.totalDuration,         
+        thisWeek: weeklyData.totalDuration,      
+        thisMonth: monthlyData.totalDuration,    
+        totalWorkingHours: totalWorkingHours  
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 
 
 export {
@@ -1056,5 +1142,6 @@ export {
   EmployeeAttandanceById,
   getAttendanceByUserId,
   getHRAllPerformance,
-  getAllHrAttandance
+  getAllHrAttandance,
+  getWorkingHoursForWeekMonthTotal
 };
