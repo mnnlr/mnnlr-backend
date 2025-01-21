@@ -6,12 +6,18 @@ import {
   getAllLeaveRequest,
   leaveRequest,
   getLeaveRequestById,
+  getAllLeavesForHr,
   approveLeaveRequest,
 } from "../Controllers/LeaveController.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
-router.route("/").get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaves);
+router.route("/")
+  .get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaves);
+
+router.route('/EmpLeavesForHr/:id')
+  .get(getAllLeavesForHr)
+
 router
   .route("/leave-request")
   .get(/*isAuthenticated, restrictMiddleware(["admin", "hr"]),*/ getAllLeaveRequest)
