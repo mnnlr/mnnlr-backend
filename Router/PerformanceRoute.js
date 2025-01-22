@@ -11,6 +11,7 @@ import {
   getHRAllPerformance,
   getAllHrAttandance,
   getWorkingHoursForWeekMonthTotal,
+  getEmployeeOfThePeriod,
 } from "../Controllers/PerformanceController.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
@@ -61,6 +62,12 @@ router.route("/workingHours/:userId").get(
   isAuthenticated,
   restrictMiddleware(["employee"]),
   getWorkingHoursForWeekMonthTotal
+)
+
+router.route('/employeeoftheperiod').get(
+  isAuthenticated,
+  restrictMiddleware(["admin"]),
+  getEmployeeOfThePeriod
 )
 
 export default router;
