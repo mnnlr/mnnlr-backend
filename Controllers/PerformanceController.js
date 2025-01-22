@@ -1132,8 +1132,154 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
   }
 };
 
+const getEmployeeOfThePeriod = async (req, res, next) => {
+  try {
+    const { period } = req.query; 
+    const today = new Date();
+    
+    let startDate, endDate;
+    
+    if (period === 'week') {
+      const currentDayOfWeek = today.getDay(); 
+    
+      const startOfCurrentWeek = new Date(today);
+      startOfCurrentWeek.setDate(today.getDate() - currentDayOfWeek + 1); 
+    
+      const startOfPreviousWeek = new Date(startOfCurrentWeek);
+      startOfPreviousWeek.setDate(startOfCurrentWeek.getDate() - 7); 
+    
+      const endOfPreviousWeek = new Date(startOfPreviousWeek);
+      endOfPreviousWeek.setDate(startOfPreviousWeek.getDate() + 4);
+    
+      startDate = startOfPreviousWeek;
+      endDate = endOfPreviousWeek;
+    
+    } else if (period === 'month') {
+      const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      startDate = new Date(previousMonth.getFullYear(), previousMonth.getMonth(), 1); 
+      endDate = new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0); 
+    } else if (period === 'year') {
+      startDate = new Date(today.getFullYear() - 1, 0, 1); 
+      endDate = new Date(today.getFullYear() - 1, 11, 31); 
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid period. Use week, month, or year.' });
+    }
 
+    const startIsoDate = startDate.toISOString().split('T')[0];
+    const endIsoDate = endDate.toISOString().split('T')[0];
 
+    const performances = await Performance.find({
+      date: { $gte: startIsoDate, $lte: endIsoDate }
+    });
+
+    if (performances.length === 0) {
+      return res.status(404).json({ success: false, message: 'No performance data found for this period.' });
+    }
+
+    const employees = await Employee.find({});
+
+    const employeeAttendance = await Promise.all(
+      employees.map(async (employee) => {
+        const {
+          _id,
+          firstName,
+          avatar,
+          email,
+          designation,
+          designationLevel,
+          employeeId,
+          lastName,
+          userId,
+        } = employee;
+
+        const employeePerformance = performances.filter(
+          (performance) => performance.user_id.toString() === userId.toString()
+        );
+
+        let totalWorkedSeconds = 0;
+        let dailyWorkedTime = {};
+
+        if (employeePerformance.length > 0) {
+          employeePerformance.forEach((performance) => {
+            if (performance.timeTracking && performance.timeTracking.length > 0) {
+              performance.timeTracking.forEach((entry) => {
+                const { timeIn, timeOut, date } = entry;
+
+                if (timeIn && timeOut) {
+                  const timeInDate = new Date(`1970-01-01T${timeIn}Z`);
+                  const timeOutDate = new Date(`1970-01-01T${timeOut}Z`);
+
+                  const workedSeconds = (timeOutDate - timeInDate) / 1000;
+
+                  const entryDate = new Date(date || performance.date).toISOString().split('T')[0];
+
+                  totalWorkedSeconds += workedSeconds;
+                    if (!dailyWorkedTime[entryDate]) {
+                      dailyWorkedTime[entryDate] = 0;
+                    }
+                    dailyWorkedTime[entryDate] += workedSeconds;
+                  }
+                }
+              );
+            }
+          });
+        }
+
+        return {
+          _id,
+          firstName,
+          lastName,
+          avatar,
+          userId,
+          email,
+          employeeId,
+          designationLevel,
+          designation,
+          totalWorkedSeconds, 
+          dailyWorkedTime, 
+        };
+      })
+    );
+
+    const validEmployeeAttendance = employeeAttendance.filter(
+      (employee) => employee.totalWorkedSeconds > 0 && Object.keys(employee.dailyWorkedTime).length > 0
+    );
+
+    if (validEmployeeAttendance.length === 0) {
+      return res.status(404).json({
+        success: true,
+        message: 'No employee has worked enough hours during this period.',
+        employee: null,
+        dailyAttendance: null,
+      });
+    }
+
+    const sortedEmployeeAttendance = validEmployeeAttendance.sort(
+      (a, b) => b.totalWorkedSeconds - a.totalWorkedSeconds
+    );
+
+    const top3Employees = sortedEmployeeAttendance.slice(0, 3);
+    top3Employees.forEach((employee) => {
+      
+      Object.keys(employee.dailyWorkedTime).forEach((date) => {
+        if (employee.dailyWorkedTime[date] >= 20600) { 
+          employee.dailyWorkedTime[date] 
+        } else {
+          // delete employee.dailyWorkedTime[date]; 
+        }
+      });
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Top 3 employees of the previous ${period}`,
+      employees: top3Employees,
+      dailyAttendance: top3Employees.map(emp => emp.dailyWorkedTime),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export {
   getAllPerformance,
@@ -1143,5 +1289,6 @@ export {
   getAttendanceByUserId,
   getHRAllPerformance,
   getAllHrAttandance,
-  getWorkingHoursForWeekMonthTotal
+  getWorkingHoursForWeekMonthTotal,
+  getEmployeeOfThePeriod
 };
