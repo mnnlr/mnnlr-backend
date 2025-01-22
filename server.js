@@ -8,7 +8,7 @@ import cloudinary from "cloudinary";
 import fileUpload from "express-fileupload";
 import configDotenv from "dotenv";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import morgan from 'morgan'
+import morgan from "morgan";
 import fs from "fs";
 import cron from "node-cron";
 // import path from "path";
@@ -28,17 +28,24 @@ app.use(
   bodyParser.urlencoded({
     limit: "50mb",
     extended: true,
-    parameterLimit: 5000
-  })
+    parameterLimit: 5000,
+  }),
 );
 
 import { autoUpdateLeave } from "./utils/autoUpdateLeave.js";
+import { autoRemoveLeaves } from "./utils/autoRemoveLeaves.js";
 
 // cron.schedule('*/10 * * * * *', () => {
 //     autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
 // });
-cron.schedule('0 0 * * *', () => {
-  autoUpdateLeave().then(() => console.log('Employee leaves update function running')).catch(err => console.error('Error updating employee leaves:', err));
+cron.schedule("0 0 * * *", () => {
+  autoUpdateLeave()
+    .then(() => console.log("Employee leaves update function running"))
+    .catch((err) => console.error("Error updating employee leaves:", err));
+
+  autoRemoveLeaves()
+    .then(() => console.log("Employee leaves removal function is executed."))
+    .catch((err) => console.log("Error while removing leaves: ", err));
 });
 
 app.use(bodyParser.json());
@@ -55,14 +62,14 @@ app.use(
       "http://localhost:3001",
       "http://localhost:3002",
       process.env.CLIENT_URL1,
-      process.env.CLIENT_URL
+      process.env.CLIENT_URL,
     ],
     withCredentials: true,
     credentials: true,
-  })
+  }),
 );
 
-app.use(morgan('tiny'))
+app.use(morgan("tiny"));
 
 import ContectusRouter from "./Router/ContectusRouter.js";
 
@@ -89,9 +96,9 @@ import RefreshTokenRoute from "./Router/RefreshTokenRoute.js";
 import LeaveRouter from "./Router/LeaveRoute.js";
 import teamRouter from "./Router/TeamRoute.js";
 
-import PasswordRecoveryRoute from './Router/passwordRecoveryRoute.js'
+import PasswordRecoveryRoute from "./Router/passwordRecoveryRoute.js";
 
-// router for updating user data 
+// router for updating user data
 app.use(userRouter);
 
 app.use(RefreshTokenRoute);
@@ -141,7 +148,8 @@ app.post("/replace-text", async (req, res) => {
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     // Iterate over each page and draw the replacements
-    const pages = pdfDoc.getPages(); cl
+    const pages = pdfDoc.getPages();
+    cl;
     for (const page of pages) {
       const { width, height } = page.getSize();
       const content = page.getTextContent();
@@ -176,7 +184,6 @@ app.post("/replace-text", async (req, res) => {
       .send({ error: "An error occurred while processing the PDF" });
   }
 });
-
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
