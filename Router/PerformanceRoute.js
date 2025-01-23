@@ -60,7 +60,7 @@ router.route("/Hr/attendance").get(
 
 router.route("/workingHours/:userId").get(
   isAuthenticated,
-  restrictMiddleware(["employee"]),
+  restrictMiddleware(["employee", "hr"]),
   getWorkingHoursForWeekMonthTotal
 )
 
