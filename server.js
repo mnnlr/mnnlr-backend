@@ -96,6 +96,7 @@ import RefreshTokenRoute from "./Router/RefreshTokenRoute.js";
 import LeaveRouter from "./Router/LeaveRoute.js";
 import teamRouter from "./Router/TeamRoute.js";
 
+import verifyEmpForWorkspaceRouter from "./Router/verifyEmpForWorkspaceRouter.js";
 import PasswordRecoveryRoute from "./Router/passwordRecoveryRoute.js";
 
 // router for updating user data
@@ -126,6 +127,9 @@ app.use("/api/v1/newcandidate", New_CandidateRoute);
 
 app.use("/leave", LeaveRouter);
 app.use("/team", teamRouter);
+
+// API for verifing wrokspace users during sign-up
+app.use("/api/ms1/verifyEmpForWorkspace", verifyEmpForWorkspaceRouter);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
