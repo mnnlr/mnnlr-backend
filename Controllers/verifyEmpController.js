@@ -1,7 +1,7 @@
 import EmployeeSchema from "../Models/employeeSchema.js";
 
 export const verifyEmp = async (req, res) => {
-  const { mnnlrId, mnnlrEmail } = req.body;
+  const { mnnlrId, mnnlrEmail } = req.query;
 
   if (!mnnlrId || !mnnlrEmail)
     return res.status(400).json({

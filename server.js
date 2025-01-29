@@ -62,6 +62,7 @@ app.use(
       "http://localhost:3001",
       "http://localhost:3002",
       process.env.CLIENT_URL1,
+      process.env.ClIENT_URL_WORKSPACE_SERVER,
       process.env.CLIENT_URL,
     ],
     withCredentials: true,
