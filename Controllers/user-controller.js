@@ -5,8 +5,8 @@ import user_model from "../Models/user_model.js";
 import { validationResult } from "express-validator";
 import { hash } from "bcrypt";
 
-import { ErrorHandler } from '../utils/errorHendler.js'
-import bcrypt from 'bcrypt'
+import { ErrorHandler } from "../utils/errorHendler.js";
+import bcrypt from "bcrypt";
 // import {sendToken} from "../utils/sendToken.js";
 // import { Sign } from "crypto";
 
@@ -18,15 +18,12 @@ export const getAllUser = async (req, res) => {
     const users = await user_model.find();
     res.status(200).json({ message: "ok", users });
   } catch (error) {
-
     res.status(500).json({ message: error.message });
   }
 };
 
 export const userRegister = async (req, res) => {
-
   try {
-
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -38,16 +35,23 @@ export const userRegister = async (req, res) => {
     let existingUser = await user_model.findOne({ email });
 
     if (existingUser) {
-      return res.status(409).json({ success: false, message: "User already exists" });
+      return res
+        .status(409)
+        .json({ success: false, message: "User already exists" });
     }
 
     const hashedPassword = await hash(password, 10);
 
-    const newUser = new user_model({ username: email, email, password: hashedPassword });
+    const newUser = new user_model({
+      username: email,
+      email,
+      password: hashedPassword,
+    });
     await newUser.save();
 
-    return res.status(200).json({ success: true, message: "User stored successfully" });
-
+    return res
+      .status(200)
+      .json({ success: true, message: "User stored successfully" });
   } catch (error) {
     return res
       .status(500)
@@ -56,27 +60,37 @@ export const userRegister = async (req, res) => {
 };
 
 export const userLogin = async (req, res, next) => {
-
   try {
-
     const { username, password } = req.body;
-    console.log("username: ", username)
+    console.log("username: ", username);
 
-    if (!username) return next(new ErrorHandler(400, 'username required'))
-    if (!password) return next(new ErrorHandler(400, 'password required'))
+    if (!username) return next(new ErrorHandler(400, "username required"));
+    if (!password) return next(new ErrorHandler(400, "password required"));
 
-    const foundUser = await user_model.findOne({ username: username }).select('+password')
+    const foundUser = await user_model
+      .findOne({ username: username })
+      .select("+password");
     // console.log("test here")
 
-    if (!foundUser) return next(new ErrorHandler(404, 'Invalid username or password'));
+    if (!foundUser)
+      return next(new ErrorHandler(404, "Invalid username or password"));
     // console.log("test-user")
     const isPasswordValid = await bcrypt.compare(password, foundUser?.password);
 
-    if (!isPasswordValid) return next(new ErrorHandler(404, 'Invalid username or password'));
+    if (!isPasswordValid)
+      return next(new ErrorHandler(404, "Invalid username or password"));
 
     // console.log("test-pass")
-    const today = new Date().toISOString().split('T')[0];
-    const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
+    // const today = new Date().toISOString().split("T")[0];
+    // const currentTime = new Date().toISOString().split("T")[1].split(".")[0];
+
+    const today = new Date().toLocaleDateString("en-CA");
+    const currentTime = new Date()
+      .toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour12: false,
+      })
+      .split(", ")[1];
 
     const performance = await Performance.findOne({
       user_id: foundUser._id,
@@ -91,7 +105,9 @@ export const userLogin = async (req, res, next) => {
         isActive: true,
       });
     } else {
-      const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+      const timeEntry = performance.timeTracking.find(
+        (entry) => !entry.timeOut,
+      );
       performance.isActive = true;
       if (!timeEntry) {
         performance.timeTracking.push({ timeIn: currentTime });
@@ -101,33 +117,46 @@ export const userLogin = async (req, res, next) => {
       }
 
       await performance.save();
-
     }
-    console.log('foundUser : ', performance);
+    console.log("foundUser : ", performance);
 
     const { password: _, refreshToken, ...rest } = foundUser._doc;
 
     const cookieOptions = {
       maxAge: 15 * 24 * 60 * 60 * 1000,
-      sameSite: 'None',
+      sameSite: "None",
       httpOnly: true,
       secure: true,
       // signed : true
-    }
+    };
 
-    const AccessToken = jwt.sign({ _id: rest?._id, role: rest.role }, process.env.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '30m' });
-    const RefreshToken = jwt.sign({ _id: rest?._id, role: rest.role }, process.env.JWT_REFRESH_TOKEN_SECRET, { expiresIn: '15d' });
+    const AccessToken = jwt.sign(
+      { _id: rest?._id, role: rest.role },
+      process.env.JWT_ACCESS_TOKEN_SECRET,
+      { expiresIn: "30m" },
+    );
+    const RefreshToken = jwt.sign(
+      { _id: rest?._id, role: rest.role },
+      process.env.JWT_REFRESH_TOKEN_SECRET,
+      { expiresIn: "15d" },
+    );
 
-    await user_model.findOneAndUpdate({ username: username }, { refreshToken: RefreshToken }, { new: true })
+    await user_model.findOneAndUpdate(
+      { username: username },
+      { refreshToken: RefreshToken },
+      { new: true },
+    );
 
-    console.log("refresh token: ", RefreshToken, "accessToken: ", AccessToken)
+    console.log("refresh token: ", RefreshToken, "accessToken: ", AccessToken);
 
-    res.cookie('Token', RefreshToken, cookieOptions);
+    res.cookie("Token", RefreshToken, cookieOptions);
 
-    res.status(200).json({ success: true, foundUser: { ...rest, accessToken: AccessToken } })
-
+    res.status(200).json({
+      success: true,
+      foundUser: { ...rest, accessToken: AccessToken },
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -136,96 +165,125 @@ export const userUpdate = async (req, res) => {
   // const { updatedUserData } = req.body;
   // console.log("updatedUserData: ", updatedUserData)
   const user = await user_model.findById(userId);
-  if (!user) return res.status(404).json({ message: "User not found", success: false });
+  if (!user)
+    return res.status(404).json({ message: "User not found", success: false });
   try {
-    const updatedUser = await user_model.findByIdAndUpdate(userId, { $set: req.body }, { new: true });
+    const updatedUser = await user_model.findByIdAndUpdate(
+      userId,
+      { $set: req.body },
+      { new: true },
+    );
     // console.log("updatedUser: ", updatedUser)
-    if (updatedUser) return res.status(200).json({ message: "User updated successfully", success: true, data: updatedUser });
+    if (updatedUser)
+      return res.status(200).json({
+        message: "User updated successfully",
+        success: true,
+        data: updatedUser,
+      });
   } catch (err) {
     console.log("error while updating user: ", err);
     return res.status(500).json({ message: err.message, success: false });
   }
-}
+};
 
 export const LogOut = async (req, res, next) => {
   try {
-
     const cookie = req.cookies;
 
     if (!cookie.Token) return res.sendStatus(204); //no content
 
     const refreshToken = cookie.Token;
 
-    const decodedData = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET)
+    const decodedData = jwt.verify(
+      refreshToken,
+      process.env.JWT_REFRESH_TOKEN_SECRET,
+    );
 
     const foundUser = await user_model.findOne({ _id: decodedData?._id });
 
     if (foundUser?.refreshToken !== refreshToken) {
       res.clearCookie("Token", {
         httpOnly: true,
-        sameSite: 'None',
+        sameSite: "None",
         secure: true,
         signed: true,
-        path: '/'
-      })
-      return res.sendStatus(204)
+        path: "/",
+      });
+      return res.sendStatus(204);
     }
 
-    await user_model.findOneAndUpdate({ refreshToken: refreshToken }, { refreshToken: null }, { new: true });
+    await user_model.findOneAndUpdate(
+      { refreshToken: refreshToken },
+      { refreshToken: null },
+      { new: true },
+    );
 
+    // const today = new Date().toISOString().split("T")[0]; // Start of today
 
-    const today = new Date().toISOString().split('T')[0]; // Start of today
+    // Getting time asper Indian Timezone
+    const today = new Date().toLocaleDateString("en-CA");
 
     const performance = await Performance.findOne({
       user_id: foundUser.id,
       date: today,
     });
-    console.log('login performance : ', performance)
-    if (performance) {
 
-      const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
-      const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+    // console.log("login performance : ", performance);
+
+    if (performance) {
+      // Getting time asper Indian timezone
+      const currentTime = new Date()
+        .toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+          hour12: false,
+        })
+        .split(", ")[1];
+
+      const timeEntry = performance.timeTracking.find(
+        (entry) => !entry.timeOut,
+      );
 
       if (!timeEntry.timeOut) {
-
         timeEntry.timeOut = currentTime;
         performance.isActive = false;
-
       }
 
       await performance.save();
-
     }
     res.clearCookie("Token", {
       httpOnly: true,
-      sameSite: 'None',
+      sameSite: "None",
       secure: true,
       signed: true,
-      path: '/'
+      path: "/",
     });
 
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+    if (error.name === "TokenExpiredError") {
       const cookie = req.cookies;
 
       const refreshToken = cookie.Token;
 
       if (!refreshToken) {
-
         res.clearCookie("Token", {
           httpOnly: true,
-          sameSite: 'None',
+          sameSite: "None",
           secure: true,
           signed: true,
-          path: '/'
-        })
-        return res.sendStatus(204)
-
+          path: "/",
+        });
+        return res.sendStatus(204);
       }
 
-      const foundUser = await user_model.findOneAndUpdate({ refreshToken: refreshToken }, { refreshToken: null }, { new: true });
-      const today = new Date().toISOString().split('T')[0];
+      const foundUser = await user_model.findOneAndUpdate(
+        { refreshToken: refreshToken },
+        { refreshToken: null },
+        { new: true },
+      );
+
+      // Getting time asper Indian timezone
+      const today = new Date().toLocaleDateString("en-CA");
 
       const performance = await Performance.findOne({
         user_id: foundUser._id,
@@ -233,28 +291,33 @@ export const LogOut = async (req, res, next) => {
       });
 
       if (performance) {
+        // Getting time asper Indian timezone
+        const currentTime = new Date()
+          .toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            hour12: false,
+          })
+          .split(", ")[1];
 
-        const currentTime = new Date().toISOString().split('T')[1].split('.')[0];
-        const timeEntry = performance.timeTracking.find(entry => !entry.timeOut);
+        const timeEntry = performance.timeTracking.find(
+          (entry) => !entry.timeOut,
+        );
 
         if (!timeEntry.timeOut) {
-
           timeEntry.timeOut = currentTime;
-
         }
 
         await performance.save();
-
       }
       res.clearCookie("Token", {
         httpOnly: true,
-        sameSite: 'None',
+        sameSite: "None",
         secure: true,
         signed: true,
-        path: '/'
+        path: "/",
       });
       return res.status(200).json({ message: "Logout successful" });
     }
-    next(error)
+    next(error);
   }
-}
+};
