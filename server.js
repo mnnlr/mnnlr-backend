@@ -96,6 +96,7 @@ import New_CandidateRoute from "./Router/New_Candidate_Route.js";
 import RefreshTokenRoute from "./Router/RefreshTokenRoute.js";
 import LeaveRouter from "./Router/LeaveRoute.js";
 import teamRouter from "./Router/TeamRoute.js";
+import hrRouter from "./Router/hrRouter.js";
 
 import verifyEmpForWorkspaceRouter from "./Router/verifyEmpForWorkspaceRouter.js";
 import PasswordRecoveryRoute from "./Router/passwordRecoveryRoute.js";
@@ -122,6 +123,7 @@ app.use("/api/v1", companyRouter);
 app.use("/api/v1", dashboardRoute);
 app.use("/api/v1", visitRoute);
 app.use("/api/v1", employeeRoute);
+app.use("/api/v1", hrRouter);
 app.use("/api/v1", userRoute);
 app.use("/api/v1/performance", PerformanceRoute);
 app.use("/api/v1/newcandidate", New_CandidateRoute);

@@ -16,58 +16,65 @@ import {
 import { isAuthenticated } from "../middleware/auth.js";
 import { restrictMiddleware } from "../middleware/restrictMiddleware.js";
 
-router
-  .route("/")
-  .get(
-    // isAuthenticated, restrictMiddleware(["admin", "hr"]), 
-    getAllPerformance
-  );
+router.route("/").get(
+  // isAuthenticated, restrictMiddleware(["admin", "hr"]),
+  getAllPerformance,
+);
 router
   .route("/rank")
   .get(
     isAuthenticated,
     restrictMiddleware(["admin", "hr"]),
-    gerPerformanceByWorkingHour
+    gerPerformanceByWorkingHour,
   );
 router
   .route("/attendance")
   .get(
     isAuthenticated,
-    restrictMiddleware(["admin", ,"hr"]),
-    AllEmployeeAttandance
+    restrictMiddleware(["admin", , "hr"]),
+    AllEmployeeAttandance,
   );
-router.route("/attendance/:id").get(
-  isAuthenticated,
-  restrictMiddleware(["admin", "hr"]),
-  EmployeeAttandanceById
-);
+router
+  .route("/attendance/:id")
+  .get(
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+    EmployeeAttandanceById,
+  );
 
-router.route("/attendance/detail/:userId").get(
-  isAuthenticated,
-  restrictMiddleware(["admin", "hr"]),
-  getAttendanceByUserId)
+router
+  .route("/attendance/detail/:userId")
+  .get(
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+    getAttendanceByUserId,
+  );
 
-router.route("/Hr/performance").get(
-  getHRAllPerformance,
-  isAuthenticated,
-  restrictMiddleware(["admin", "hr"]),
-)
-router.route("/Hr/attendance").get(
-  getAllHrAttandance,
-  isAuthenticated,
-  restrictMiddleware(["admin", "hr"]),
-)
+router
+  .route("/Hr/performance")
+  .get(
+    getHRAllPerformance,
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+  );
+router
+  .route("/Hr/attendance")
+  .get(
+    getAllHrAttandance,
+    isAuthenticated,
+    restrictMiddleware(["admin", "hr"]),
+  );
 
-router.route("/workingHours/:userId").get(
-  isAuthenticated,
-  restrictMiddleware(["employee", "hr"]),
-  getWorkingHoursForWeekMonthTotal
-)
+router
+  .route("/workingHours/:userId")
+  .get(
+    isAuthenticated,
+    restrictMiddleware(["employee", "hr"]),
+    getWorkingHoursForWeekMonthTotal,
+  );
 
-router.route('/employeeoftheperiod').get(
-  isAuthenticated,
-  restrictMiddleware(["admin"]),
-  getEmployeeOfThePeriod
-)
+router
+  .route("/employeeoftheperiod")
+  .get(isAuthenticated, restrictMiddleware(["admin"]), getEmployeeOfThePeriod);
 
 export default router;
