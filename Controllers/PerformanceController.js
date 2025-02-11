@@ -1128,6 +1128,7 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
     });
 
   } catch (error) {
+    console.log('error',error);
     next(error);
   }
 };
