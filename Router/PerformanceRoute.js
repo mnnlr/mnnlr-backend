@@ -31,7 +31,7 @@ router
   .route("/attendance")
   .get(
     isAuthenticated,
-    restrictMiddleware(["admin", , "hr"]),
+    restrictMiddleware(["admin", "hr"]),
     AllEmployeeAttandance,
   );
 router
