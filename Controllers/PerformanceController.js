@@ -859,7 +859,7 @@ const AllEmployeeAttandance = async (req, res, next) => {
     }
 
     const employeeIds = users.map((user) => user._id);
-    console.log("employeeIds: ", employeeIds);
+    // console.log("employeeIds: ", employeeIds);
 
     const employees = await Employee.find({ userId: { $in: employeeIds } });
     // console.log("employees: ", employees);

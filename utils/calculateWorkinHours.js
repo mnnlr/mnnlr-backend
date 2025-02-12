@@ -77,12 +77,7 @@ async function calculateTotalWorkingHours(attandance, period) {
     const timeIn = moment.tz(entry.timeIn, "HH:mm:ss", "Asia/Kolkata");
     const timeOut = entry.timeOut
       ? moment.tz(entry.timeOut, "HH:mm:ss", "Asia/Kolkata")
-      : moment.tz(
-        new Date().toTimeString().split(" ")[0],
-        "HH:mm:ss",
-        "Asia/Kolkata",
-      );
-
+      : moment().tz("Asia/Kolkata");
     const duration = moment.duration(timeOut.diff(timeIn));
 
     calculatedAttendance.timeTracking.push({
