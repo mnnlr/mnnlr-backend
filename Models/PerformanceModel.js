@@ -31,10 +31,26 @@ const performanceSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // morningLateLogin: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // afternoonLateLogin: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // morningArlyLogout: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // afternoonArlyLogout: {
+    //   type: Boolean,
+    //   default: false,
+    // },
   },
   {
-    timestamps: true, 
-  }
+    timestamps: true,
+  },
 );
 
 const Performance = mongoose.model("Performance", performanceSchema);

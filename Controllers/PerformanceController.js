@@ -6,6 +6,8 @@ import calculateTotalWorkingHours from "../utils/calculateWorkinHours.js";
 import { ErrorHandler } from "../utils/errorHendler.js";
 import user from "../Models/user_model.js";
 import User from "../Models/user_model.js";
+import { checkLateLogin } from "../utils/checkLateLogin.js";
+import { checkEarlyLogout } from "../utils/checkEarlyLogout.js";
 
 const getAllPerformance = async (req, res, next) => {
   try {
@@ -902,11 +904,22 @@ const AllEmployeeAttandance = async (req, res, next) => {
             designationLevel,
             designation,
             isActive: false,
+            isMorningLate: false,
+            isAfternoonLate: false,
+            isMorningEarlyLogout: false,
+            isAfternoonEarlyLogout: false,
           };
         }
 
         const { calculatedAttendance } =
           await calculateTotalWorkingHours(employeePerformance);
+
+        // Check if the employee logged in late
+        const { isMorningLate, isAfternoonLate } =
+          checkLateLogin(employeePerformance);
+
+        const { isMorningEarlyLogout, isAfternoonEarlyLogout } =
+          checkEarlyLogout(employeePerformance);
 
         return {
           _id,
@@ -920,6 +933,10 @@ const AllEmployeeAttandance = async (req, res, next) => {
           designation,
           attendance: calculatedAttendance,
           isActive: employeePerformance.isActive,
+          isMorningLate, // Tracks morning lateness
+          isAfternoonLate, // Tracks afternoon lateness
+          isMorningEarlyLogout,
+          isAfternoonEarlyLogout,
         };
       }),
     );
