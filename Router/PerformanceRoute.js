@@ -69,7 +69,7 @@ router
   .route("/workingHours/:userId")
   .get(
     isAuthenticated,
-    restrictMiddleware(["employee", "hr"]),
+    restrictMiddleware(["employee", "hr","admin"]),
     getWorkingHoursForWeekMonthTotal,
   );
 
