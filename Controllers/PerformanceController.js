@@ -6,6 +6,8 @@ import calculateTotalWorkingHours from "../utils/calculateWorkinHours.js";
 import { ErrorHandler } from "../utils/errorHendler.js";
 import user from "../Models/user_model.js";
 import User from "../Models/user_model.js";
+import { checkLateLogin } from "../utils/checkLateLogin.js";
+import { checkEarlyLogout } from "../utils/checkEarlyLogout.js";
 
 const getAllPerformance = async (req, res, next) => {
   try {
@@ -591,8 +593,7 @@ const AllEmployeeAttandance = async (req, res, next) => {
     }
 
     const employeeIds = users.map((user) => user._id);
-    console.log("employeeIds: ", employeeIds);
-    
+    // console.log("employeeIds: ", employeeIds);
 
     const employees = await Employee.find({ userId: { $in: employeeIds } });
 // console.log("employees: ", employees);
@@ -632,11 +633,22 @@ const AllEmployeeAttandance = async (req, res, next) => {
             employeeId,
             designationLevel,
             designation,
-            isActive: false, 
+            isActive: false,
+            isMorningLate: false,
+            isAfternoonLate: false,
+            isMorningEarlyLogout: false,
+            isAfternoonEarlyLogout: false,
           };
         }
 
         const { calculatedAttendance } = await calculateTotalWorkingHours(employeePerformance);
+
+        // Check if the employee logged in late
+        const { isMorningLate, isAfternoonLate } =
+          checkLateLogin(employeePerformance);
+
+        const { isMorningEarlyLogout, isAfternoonEarlyLogout } =
+          checkEarlyLogout(employeePerformance);
 
         return {
           _id,
@@ -649,7 +661,11 @@ const AllEmployeeAttandance = async (req, res, next) => {
           designationLevel,
           designation,
           attendance: calculatedAttendance,
-          isActive: employeePerformance.isActive, 
+          isActive: employeePerformance.isActive,
+          isMorningLate, // Tracks morning lateness
+          isAfternoonLate, // Tracks afternoon lateness
+          isMorningEarlyLogout,
+          isAfternoonEarlyLogout,
         };
       })
     );
