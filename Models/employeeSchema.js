@@ -151,8 +151,8 @@ const employeeSchema = new mongoose.Schema(
     },
     dateofjoining: {
       type: String,
-      // default: () => new Date().toISOString().split('T')[0],
-      // required: true,
+      default: () => new Date().toISOString().split('T')[0],
+      required: true,
     },
     AssignShiftsToHR: {
       type: [String]

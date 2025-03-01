@@ -362,10 +362,17 @@ export const createEmployeeDetails = async (req, res) => {
       designation,
       designationLevel,
       employeeId,
+      dateofjoining,
+      employeeTeam,
+      shift,
     } = req.body;
-    console.log({ firstName, lastName, fatherName, motherName, address, phoneNo, email, description, designation, designationLevel, employeeId })
+    console.log({
+      firstName, lastName, fatherName, motherName, address, phoneNo, email, description, designation, designationLevel, employeeId, dateofjoining,
+      employeeTeam,
+      shift
+    })
 
-    if (!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId) {
+    if (!firstName || !lastName || !fatherName || !motherName || !address || !phoneNo || !email || !description || !designation || !designationLevel || !employeeId || !dateofjoining || !employeeTeam || !shift) {
       return res.status(400).json({ success: false, message: 'Please fill all required fields.' })
     }
 
@@ -507,6 +514,9 @@ export const createEmployeeDetails = async (req, res) => {
       designation,
       designationLevel,
       employeeId,
+      dateofjoining,
+      employeeTeam,
+      shift,
       userId: User._id,
       avatar: {
         public_id: myCloud.public_id,

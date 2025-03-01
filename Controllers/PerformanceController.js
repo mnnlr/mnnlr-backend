@@ -1061,8 +1061,7 @@ const getWeekNumber = (date) => {
   const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
   return Math.ceil((days + 1) / 7); 
 };
-
-const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
+const getWorkingHoursForWeekMonthTotal = async (req, res, next) => { 
   try {
     const { userId } = req.params;
     if (!userId) {
@@ -1073,8 +1072,7 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
     }
 
     const performanceData = await Performance.find({ user_id: userId }).select("timeTracking date user_id");
-      // console.log("performanceData: ", performanceData);
-
+    
     if (!performanceData || performanceData.length === 0) {
       return res.status(404).json({
         success: false,
@@ -1085,17 +1083,16 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
     const convertToSeconds = (timeStr) => {
       if (!timeStr) return 0;
       const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-      return (hours * 3600) + (minutes * 60) + (seconds); 
+      return (hours * 3600) + (minutes * 60) + seconds; 
     };
 
     const currentDate = new Date();
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); 
+    startOfWeek.setHours(0, 0, 0, 0); 
 
     const startOfToday = new Date(currentDate);
     startOfToday.setHours(0, 0, 0, 0); 
-
-    startOfWeek.setHours(0, 0, 0, 0); 
     currentDate.setHours(23, 59, 59, 999); 
 
     const groupByPeriod = (data, startDate, endDate) => {
@@ -1118,10 +1115,10 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
       }, { totalDuration: 0 });
     };
 
-    const todayData = groupByPeriod(performanceData, startOfToday, currentDate);
-    const weeklyData = groupByPeriod(performanceData, startOfWeek, currentDate);
-    const monthlyData = groupByPeriod(performanceData, new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), currentDate);
-    const totalWorkingHours = performanceData.reduce((total, performance) => {
+    let todayData = groupByPeriod(performanceData, startOfToday, currentDate);
+    let weeklyData = groupByPeriod(performanceData, startOfWeek, currentDate);
+    let monthlyData = groupByPeriod(performanceData, new Date(currentDate.getFullYear(), currentDate.getMonth(), 1), currentDate);
+    let totalWorkingHours = performanceData.reduce((total, performance) => {
       performance.timeTracking.forEach((time) => {
         const timeIn = time.timeIn && typeof time.timeIn === 'string' ? convertToSeconds(time.timeIn) : 0;
         const timeOut = time.timeOut && typeof time.timeOut === 'string' ? convertToSeconds(time.timeOut) : 0;
@@ -1131,13 +1128,26 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
       return total;
     }, 0);
 
+    // Add duration of last login session (if active) to all time periods
+    const latestSession = performanceData.flatMap(p => p.timeTracking).reverse().find(time => time.timeIn && !time.timeOut);
+    if (latestSession) {
+      const currentSeconds = convertToSeconds(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }));
+      const latestTimeIn = convertToSeconds(latestSession.timeIn);
+      const additionalDuration = Math.max(0, currentSeconds - latestTimeIn); // Ensure no negative values
+      
+      totalWorkingHours += additionalDuration;
+      todayData.totalDuration += additionalDuration;
+      weeklyData.totalDuration += additionalDuration;
+      monthlyData.totalDuration += additionalDuration;
+    }
+
     res.status(200).json({
       success: true,
       data: {
-        today: todayData.totalDuration,         
-        thisWeek: weeklyData.totalDuration,      
-        thisMonth: monthlyData.totalDuration,    
-        totalWorkingHours: totalWorkingHours  
+        today: Math.max(0, todayData.totalDuration),        
+        thisWeek: Math.max(0, weeklyData.totalDuration),     
+        thisMonth: Math.max(0, monthlyData.totalDuration),   
+        totalWorkingHours: Math.max(0, totalWorkingHours)  
       }
     });
 
@@ -1146,6 +1156,7 @@ const getWorkingHoursForWeekMonthTotal = async (req, res, next) => {
     next(error);
   }
 };
+
 
 const getEmployeeOfThePeriod = async (req, res, next) => {
   try {
